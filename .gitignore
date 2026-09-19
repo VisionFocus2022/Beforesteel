@@ -26,6 +26,8 @@ pytest_report.xml
 
 # Scratch outputs (generated CAD files, smoke artifacts)
 output/*
+# Real-machine probe artifacts (N57 evidence lives in tools/INDEX.md + plan docs)
+/probe_out/
 # Governance docs live in output/ but must stay version-controlled (G1 backup spirit)
 !output/optimization-plan-*.md
 !output/architecture-evolution-*/

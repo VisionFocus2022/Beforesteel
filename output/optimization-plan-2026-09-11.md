@@ -4,6 +4,7 @@
 > **主题**：触发驱动冲刺——用户动作（SW 窗口/宏/批准/上游）→ AI 批量兑现；北极星 90% → 95% 冲线
 > **用途**：供每日 02:30 自动实施任务读取执行；亦供人工实施参考（AGENTS.md 契约：自动任务读本文件=最新日期计划）
 > **承接**：第十期 `output/optimization-plan-2026-09-10-3.md` N52-N54/N56 ✅+残留裁决 ✅（终态 45/50=90%）；**N55 等 U9 续挂**。测试基线继承（主仓 565+106/80 工具；aicad 741 not-perf）。
+> **收官对账 2026-09-19**：双仓离线基线复验全绿（主仓 566+106；aicad 全集 763/not-perf 745+18 deselected）+N60 补推部分回填 ✅（见 §6）；N57/N59/U10/U11 终态维持（北极星 98%）。剩余=N58 挂 U9（录宏）、N60 CI re-run 挂 U8、U4——**AI 侧可做项清零，全部杠杆在用户侧**。
 
 ---
 
@@ -25,7 +26,7 @@
 | N57 | P0 | **实机三合一**（GTOL e2e / frozen COM / CSG SW roundtrip） | 主 | SW 窗口（用户挂机） | 1晚 | `[x]` 2026-09-12（**三批全 PASS**：A=GTOL 实机可用——NewGtol 必须 typed IDrawingDoc 路径（dynamic MEMBERNOTFOUND），生产 fallback 已修+测试钉死，全链 e2e 框格落图 PDF 45KB；B=frozen exe 真附着 2.7s 全链 bbox [60,40,10] 精确；C=双引擎 rel diff **1.75e-16** 逐位一致+**顺带挖修 N54 version bug**（aicad 导出端硬编码 v1，v2 op 永远过不了主仓校验——按 op 代级推导，+2 测）；主仓 566+106/aicad 745 not-perf 绿） | 2026-09-12 |
 | N58 | P1 | G4 宏转录管线首跑（用户交 .swp 即开工该族；~~mirror 优先~~→**勘误 09-12：mirror 已解，改四族 pattern/rib/combine/AutoBalloon 任一优先**） | 主 | U9 | 1晚/族 | `[ ]` 条件 | |
 | N59 | P0 | plan 强档路由对比评测 → 装配堆叠回收 → **95% 冲线** | ai | 上游第二家 provider | 1晚 | `[x]` ✅ 2026-09-13 终态 **48/50=96% 北极星达成**（双会话并集：连跑 47+泵座复跑转绿；双臂证伪路由增益=归因漂移；唯二稳定败=b7_flange_bolts/stepped_sleeve_pair；详见 §5+报告 §9-§10） | 2026-09-13 |
-| N60 | P2 | github pending 补推 + U8 后双仓 CI re-run 收口 | — | 网络窗口/U8 | 0.1晚 | `[ ]` 条件 | |
+| N60 | P2 | github pending 补推 + U8 后双仓 CI re-run 收口 | — | 网络窗口/U8 | 0.1晚 | `[ ]` 部分：**补推 ✅ 2026-09-13**（09-19 对账回填：ls-remote github main==本地 f127434、aicad b8536d3 0/0 同步）；CI re-run 仍挂 U8 | |
 
 ### 2.4 用户动作清单（顺承）
 
@@ -81,7 +82,8 @@
 
 ## 6. N60 补推+CI 收口（条件）
 
-- [ ] 网络窗口恢复→双仓补推（aicad 2+主仓 1+本期新增）；U8 后 re-run 最新 run。
+- [x] 网络窗口恢复→双仓补推 ✅ 2026-09-13 早晨已发生（主仓 f127434 / aicad b8536d3；**2026-09-19 收官对账核验**：`git ls-remote github refs/heads/main`==本地 HEAD，双仓 0/0 同步——原表未回填系计划文件最后写入 06:31 早于 push 06:32）。
+- [ ] U8 后 re-run 最新 run（2026-09-19 核验：GitHub 网络通；本机无 gh CLI+仓库私有 → CI 运行状态离线不可见，仍挂 U8 Billing 清算）。
 
 ---
 
