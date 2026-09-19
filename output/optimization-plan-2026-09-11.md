@@ -5,6 +5,7 @@
 > **用途**：供每日 02:30 自动实施任务读取执行；亦供人工实施参考（AGENTS.md 契约：自动任务读本文件=最新日期计划）
 > **承接**：第十期 `output/optimization-plan-2026-09-10-3.md` N52-N54/N56 ✅+残留裁决 ✅（终态 45/50=90%）；**N55 等 U9 续挂**。测试基线继承（主仓 565+106/80 工具；aicad 741 not-perf）。
 > **收官对账 2026-09-19**：双仓离线基线复验全绿（主仓 566+106；aicad 全集 763/not-perf 745+18 deselected）+N60 补推部分回填 ✅（见 §6）；N57/N59/U10/U11 终态维持（北极星 98%）。剩余=N58 挂 U9（录宏）、N60 CI re-run 挂 U8、U4——**AI 侧可做项清零，全部杠杆在用户侧**。
+> **2026-09-19 续（用户令「继续实施剩余任务」）**：N58 管线解析器预建 ✅（§4 回填；tools/macro_transcribe.py 18 测试+oletools 逐字节对照；U9 交付即首跑）+ U9 五分钟录宏指引 `docs/macro-recording-guide.md`；主仓 584+106 全绿零回归。U4/U8 仍待用户交互式动作（无 gh CLI/凭据，AI 无法代办）。
 
 ---
 
@@ -34,7 +35,7 @@
 |---|---|---|
 | **U4** | coderabbit auth login | ⏳ |
 | **U8** | Billing 失败发票清算（页无欠款仍拦则工单） | 🔴 |
-| **U9** | 录宏目标勘误（09-12）：mirror 已解免录；**改录 pattern/rib/combine/AutoBalloon 任一族** ~30min（如需 boss 级镜像原生亦可录 mirror 宏）→ .swp 路径一句话通知 | ⏳ 条件 |
+| **U9** | 录宏目标勘误（09-12）：mirror 已解免录；**改录 pattern/rib/combine/AutoBalloon 任一族**（09-19：预估降至 5-10 分钟，五分钟指引 `docs/macro-recording-guide.md`；转录管线已预建，交付路径即首跑）→ .swp 路径一句话通知 | ⏳ 条件 |
 | **U11** | hex_nut_plate 措辞消歧 | ✅ 2026-09-13 用户批准并执行：「对顶距40」→「外接圆直径40（顶点距40、对边距34.64）」三重标注（断言/mock 零动）；离线 50/50 维持+live 复跑 PASS——**终态 49/50 = 98%**（aicad b8536d3；报告 §10.4；全套 745 绿）；唯二稳定败=b7_flange_bolts/stepped_sleeve_pair（长尾不强凑） |
 | **U10（新增）** | 批准 two_step_bore_plate 体积窗口 [21000,24000]→[21000,24800] → +1 任务=92% | ✅ 2026-09-12 批准并执行：改窗+离线 50/50 维持+live 复跑 PASS——**终态 46/50=92%**（aicad e4c7b92）；报告 §8.5 补记 |
 
@@ -68,7 +69,8 @@
 
 ## 4. N58 宏转录管线（条件 on U9，1晚/族）
 
-- [ ] .swp 宏解析器（VBA 提取 API 调用序列→typelib 对照契约卡）→ 探针复现 → TDD → 工具+计数锁+示例卡+BLOCKED 撤销。无宏不猜。
+- [x] .swp 宏解析器 ✅ **2026-09-19 预建**：`tools/macro_transcribe.py`（纯 stdlib，OLE→MS-OVBA→dir→API 调用序列四层；与 oletools 参考逐字节一致；`.swb/.txt/.bas` 透传；中文 cp936 解码正确）+ `tests/test_macro_transcribe.py` 18 例锁定；四族内容零猜测（FB-020 维持），仅管线与格式坑落地——取证详见 tools/INDEX.md 根目录行。
+- [ ] 探针复现 → TDD → 工具+计数锁（80→81）+示例卡+BLOCKED 撤销（条件 on U9 交付 .swp；无宏不猜）。**录宏五分钟指引：`docs/macro-recording-guide.md`**（pattern/rib/combine/AutoBalloon 任一族）→ 交付路径一句话即开工。
 
 > **2026-09-12 前置核证（FB-020，N58 未开工即拦）**：用户指令声称「mirror 等五族 BLOCKED+已录宏」，但占位符未填路径、全盘无 mirror 宏文件。按核证铁律以 HEAD+实机裁决：「五族含 mirror」为 T8 时代旧枚举——**mirror 已于 08-30 N9 原生解锁**（commit 51bd1c3；契约=特征 SelectByID2(BODYFEATURE,mark1)+基准面(PLANE,append,mark2)+`fm.InsertMirrorFeature2(False,True,True,False,0)`，第 5 参 ScopeOptions=0 为解锁关键）并当晚经生产 MCP 工具链实机复验 **PASS**（box 30×20×10+⌀8 孔@x10 → `features_mirror(切除-拉伸1, right)` → 树新增「镜向1」）。真正待宏解锁=**四族 pattern/rib/combine/AutoBalloon**。另两条实证：①镜像 boss 特征（凸台-拉伸1）被 SW 静默拒收=工具边界观察项（registry 文案宜明示 cut-symmetric）；②核证中发现**另一进程并发修改本仓库+同一 SW 实例**（drawing.py/test_drawing.py/probe_n52_gtol.py 在变+e2e_n57_{gtol_e2e,frozen_sw,csg_roundtrip}.py 陆续出现，高度疑似 N57 批次提前执行；其 CloseAllDocuments 与我进行中 COM 调用竞态→RPC_E_DISCONNECTED(0x80010108) 瞬态）——实机批次跨会话应串行。**U9 未交付 → N58 维持条件挂起，无宏不猜。**
 

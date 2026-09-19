@@ -20,7 +20,7 @@ MCP 服务器（官方 Python SDK，stdio）：把 SolidWorks 2026 COM 自动化
 ## 测试与基线
 
 ```powershell
-venv\Scripts\python.exe -m pytest tests/ -q     # 566 passed + 106 subtests（~12s，2026-09-19 收官复验全绿）
+venv\Scripts\python.exe -m pytest tests/ -q     # 584 passed + 106 subtests（~9s，2026-09-19 N58 管线预建后全绿）
 venv\Scripts\python.exe tools\e2e_sw_smoke.py   # 实机 e2e（需 SW 运行；tracked 台账 output/e2e-summary.md）
 ```
 
