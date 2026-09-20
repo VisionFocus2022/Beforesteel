@@ -27,14 +27,14 @@
 | N57 | P0 | **实机三合一**（GTOL e2e / frozen COM / CSG SW roundtrip） | 主 | SW 窗口（用户挂机） | 1晚 | `[x]` 2026-09-12（**三批全 PASS**：A=GTOL 实机可用——NewGtol 必须 typed IDrawingDoc 路径（dynamic MEMBERNOTFOUND），生产 fallback 已修+测试钉死，全链 e2e 框格落图 PDF 45KB；B=frozen exe 真附着 2.7s 全链 bbox [60,40,10] 精确；C=双引擎 rel diff **1.75e-16** 逐位一致+**顺带挖修 N54 version bug**（aicad 导出端硬编码 v1，v2 op 永远过不了主仓校验——按 op 代级推导，+2 测）；主仓 566+106/aicad 745 not-perf 绿） | 2026-09-12 |
 | N58 | P1 | G4 宏转录管线首跑 + **pattern 生产工具**（UI PM 驱动通道） | 主 | ~~U9~~ ✅ | — | `[x]` **2026-09-20 完成**：U9 代录宏（a57160d）→契约转录→定谳录制宏扁平重放不可行→生产工具 `solidworks_part_circular_pattern` 交付（232181f/f34f00d，81/83 工具；594+107 绿）；实机菜单/PM/树全通，遗留=面板偏移布局锚定（CAM 标签行差 26px）→INDEX N58/U9 行 | 2026-09-20 |
 | N59 | P0 | plan 强档路由对比评测 → 装配堆叠回收 → **95% 冲线** | ai | 上游第二家 provider | 1晚 | `[x]` ✅ 2026-09-13 终态 **48/50=96% 北极星达成**（双会话并集：连跑 47+泵座复跑转绿；双臂证伪路由增益=归因漂移；唯二稳定败=b7_flange_bolts/stepped_sleeve_pair；详见 §5+报告 §9-§10） | 2026-09-13 |
-| N60 | P2 | github pending 补推 + U8 后双仓 CI re-run 收口 | — | 网络窗口/U8 | 0.1晚 | `[ ]` 部分：**补推 ✅ 2026-09-13**（09-19 对账回填：ls-remote github main==本地 f127434、aicad b8536d3 0/0 同步）；CI re-run 仍挂 U8 | |
+| N60 | P2 | github pending 补推 + CI re-run 收口 | — | ~~网络窗口/U8~~ ✅ | 0.1晚 | `[ ]` **CI 已验证**（U8 转公开+重跑 success）；剩余=推送本地 6 commit（3c88283..3d29e8e，含 N58 工具）——按「绝不 push」红线待用户一句授权 | |
 
 ### 2.4 用户动作清单（顺承）
 
 | ID | 动作 | 状态 |
 |---|---|---|
 | **U4** | coderabbit auth login | ⏳ |
-| **U8** | → **2026-09-20 API 定谳**：09-02 后 24 run 连败全 steps=0+日志 404+官方注解「recent account payments have failed or your spending limit needs to be increased」=私有仓 Actions 未付费拦截。入口 github.com/settings/billing（清算发票或上调 Actions spending limit）；零成本备选=转公开仓。财务动作须用户执行（浏览器已代开该页） | 🔴 用户 |
+| **U8** | ✅ **2026-09-20 完成**（用户令转公开）：repo private→public（API PATCH，秘密扫描干净后执行）→ 重跑 f127434 → **CI success**（09-02 后首条绿流水线；job steps=9 全过） | ✅ 2026-09-20 |
 | **U9** | ~~录宏目标勘误（09-12）~~ → **✅ 2026-09-20 AI 代录完成**（用户仅授权电脑控制）：pywinauto 驱动 SW 菜单/特征树/圆周阵列 PM，真录制 macros/pattern_record_raw1.swp（33KB）；pattern 族契约+重放边界定谳归档 tools/INDEX.md N58/U9 行；rib/combine/AutoBalloon 三族仍可按 docs/macro-recording-guide.md 录制或后续同法代录 | ✅ 2026-09-20 |
 | **U11** | hex_nut_plate 措辞消歧 | ✅ 2026-09-13 用户批准并执行：「对顶距40」→「外接圆直径40（顶点距40、对边距34.64）」三重标注（断言/mock 零动）；离线 50/50 维持+live 复跑 PASS——**终态 49/50 = 98%**（aicad b8536d3；报告 §10.4；全套 745 绿）；唯二稳定败=b7_flange_bolts/stepped_sleeve_pair（长尾不强凑） |
 | **U10（新增）** | 批准 two_step_bore_plate 体积窗口 [21000,24000]→[21000,24800] → +1 任务=92% | ✅ 2026-09-12 批准并执行：改窗+离线 50/50 维持+live 复跑 PASS——**终态 46/50=92%**（aicad e4c7b92）；报告 §8.5 补记 |
