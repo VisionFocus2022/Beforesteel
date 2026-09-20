@@ -164,7 +164,7 @@ class TestServerToolWrappers(unittest.TestCase):
         result = server.solidworks_design_capabilities()
 
         self.assertTrue(result["success"])
-        self.assertEqual(len(result["data"]["tools"]), 80)
+        self.assertEqual(len(result["data"]["tools"]), 81)
 
     def test_resources_return_json_payloads(self):
         status = json.loads(server.solidworks_status_resource())
@@ -177,7 +177,7 @@ class TestServerToolWrappers(unittest.TestCase):
         self.assertTrue(active["success"])
 
         capabilities = json.loads(server.solidworks_capabilities_resource())
-        self.assertEqual(len(capabilities["tools"]), 80)
+        self.assertEqual(len(capabilities["tools"]), 81)
 
 
 class TestComTimeout(unittest.TestCase):

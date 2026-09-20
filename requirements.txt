@@ -1,3 +1,3 @@
 pywin32>=306
 mcp[cli]>=1.28.1,<1.29.0
-pydantic>=2.12.0,<3.0.0
+pydantic>=2.12.0,<3.0.0pywinauto>=0.6.8 ; sys_platform == 'win32'  # N58 pattern UI channel

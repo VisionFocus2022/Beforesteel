@@ -46,6 +46,7 @@ from solidworks_mcp.registry.part import (  # noqa: F401
     solidworks_part_apply_fillet,
     solidworks_part_apply_shell,
     solidworks_part_create_annular_pattern,
+    solidworks_part_circular_pattern,
     solidworks_part_create_box,
     solidworks_part_create_cone,
     solidworks_part_create_cylinder,

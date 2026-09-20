@@ -1,7 +1,7 @@
 # AGENTS.md — SolidWorksMCP 主仓导航
 
 MCP 服务器（官方 Python SDK，stdio）：把 SolidWorks 2026 COM 自动化暴露为
-80 个工具给 AI 调用（82 开产品工具）——零件建模、特征、装配、工程图、导出、参数化全链路。
+81 个工具给 AI 调用（83 开产品工具）——零件建模、特征、装配、工程图、导出、参数化全链路。
 目标：AI 全自动绘制 3D 机械图（零件 → 装配 → 工程图 → PDF/STEP/STL）。
 
 ## 目录地图
@@ -9,7 +9,7 @@ MCP 服务器（官方 Python SDK，stdio）：把 SolidWorks 2026 COM 自动化
 | 路径 | 内容 |
 |---|---|
 | `solidworks_mcp/server.py` | 门面（~206 行）：FastMCP 实例 + 3 resources + stdio 入口 + 全量 re-export |
-| `solidworks_mcp/registry/` | **80 工具按域落此**（N14；默认注册，开产品工具 82）：`base.py` 共享类型/执行件 + `part/assembly/drawing/features/file_io/misc/properties/products/prompts` 域模块；新工具加域模块，别加 server.py |
+| `solidworks_mcp/registry/` | **81 工具按域落此**（N14；默认注册，开产品工具 83）：`base.py` 共享类型/执行件 + `part/assembly/drawing/features/file_io/misc/properties/products/prompts` 域模块；新工具加域模块，别加 server.py |
 | `solidworks_mcp/solidworks_api/` | COM 实现 16 模块（app/design/drawing/assembly/features/pattern/…） |
 | `solidworks_mcp/examples/` | 产品专用工具（ring_light）——env 门控，默认不注册 |
 | `tests/` | 单元测试（mock COM，无需 SW 实机） |
@@ -20,7 +20,7 @@ MCP 服务器（官方 Python SDK，stdio）：把 SolidWorks 2026 COM 自动化
 ## 测试与基线
 
 ```powershell
-venv\Scripts\python.exe -m pytest tests/ -q     # 584 passed + 106 subtests（~9s，2026-09-19 N58 管线预建后全绿）
+venv\Scripts\python.exe -m pytest tests/ -q     # 594 passed + 107 subtests（~9s，2026-09-20 N58 pattern 工具后全绿）
 venv\Scripts\python.exe tools\e2e_sw_smoke.py   # 实机 e2e（需 SW 运行；tracked 台账 output/e2e-summary.md）
 ```
 

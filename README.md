@@ -6,7 +6,7 @@
 
 ## 主要能力
 
-- 使用官方 Python MCP SDK，通过 stdio 提供 80 个 tools、3 个 resources、5 个 prompts
+- 使用官方 Python MCP SDK，通过 stdio 提供 81 个 tools、3 个 resources、5 个 prompts
 - 连接正在运行的 SolidWorks，或在明确允许时自动启动
 - 新建零件，创建板件、块体、圆柱体和圆孔
 - 生成 9 行球形穹顶环形灯零件（产品专用工具，代码位于 solidworks_mcp/examples/，默认不注册；设 `SOLIDWORKS_MCP_PRODUCT_TOOLS=ring_light` 后启用，工具数 80 → 82）
@@ -100,6 +100,7 @@ Tools 按领域分为：
 - 设计：solidworks_design_capabilities、solidworks_design_execute_plan
 - 零件：solidworks_part_new、solidworks_part_create_plate、solidworks_part_create_box、solidworks_part_create_cylinder、solidworks_part_cut_round_hole、solidworks_part_create_revolved、solidworks_part_create_loft、solidworks_part_create_swept、solidworks_part_create_polygon、solidworks_part_create_slot、solidworks_part_create_ref_plane、solidworks_part_create_ref_axis、solidworks_part_create_rib、solidworks_part_apply_dome、solidworks_part_apply_fillet、solidworks_part_apply_chamfer、solidworks_part_apply_shell、solidworks_part_get_mass_properties
 - 阵列：solidworks_pattern_annular_layout、solidworks_part_create_annular_pattern（通用同心环圆特征阵列，cut/boss，支持避让角相位优化）
+- 阵列：solidworks_part_circular_pattern（圆周阵列，PM 面板 UI 驱动通道——需可见最大化 SW 窗口与 pywinauto；N58）
 - 文件：solidworks_file_open、solidworks_file_close、solidworks_file_import_step、solidworks_file_export_step、solidworks_file_export_stl
 - 特征：solidworks_features_list、solidworks_feature_rename、solidworks_feature_set_suppression
 - 装配：solidworks_assembly_add_component、solidworks_assembly_explode、solidworks_assembly_list_components、solidworks_assembly_add_mate
@@ -150,7 +151,7 @@ python -m coverage report
 
 ## 当前边界
 
-当前设计能力适合棱柱、圆柱、圆锥、板件、圆孔和螺纹孔等基础参数化零件，并支持环形阵列、旋转轮廓、放样/扫描（多截面与沿路径特征）、基准面/基准轴、圆顶与筋板（筋为薄板数学替代——非自适应壁，InsertRib 不可用）、回转与工程图（三视图+尺寸+尺寸去重叠整理+剖视图+公差/粗糙度/注释+PDF/PNG/DXF 导出）。复杂草图约束、线性/草图驱动阵列、曲面、GD&T 形位公差框格、仿真和 PDM 尚未作为稳定工具暴露。基础装配配合仍使用 SolidWorks 兼容 API，建议在正式生产装配上先使用副本验证。
+当前设计能力适合棱柱、圆柱、圆锥、板件、圆孔和螺纹孔等基础参数化零件，并支持环形阵列、旋转轮廓、放样/扫描（多截面与沿路径特征）、基准面/基准轴、圆顶与筋板（筋为薄板数学替代——非自适应壁，InsertRib 不可用）、回转与工程图（三视图+尺寸+尺寸去重叠整理+剖视图+公差/粗糙度/注释+PDF/PNG/DXF 导出）。圆周阵列已通过 PM 面板 UI 驱动通道解锁（N58）。复杂草图约束、线性/草图驱动阵列、曲面、GD&T 形位公差框格、仿真和 PDM 尚未作为稳定工具暴露。基础装配配合仍使用 SolidWorks 兼容 API，建议在正式生产装配上先使用副本验证。
 ## 面向 AI 的工作流提示词
 
 MCP prompts（5 个）：`solidworks_design_part_prompt`（零件设计+感知精修工作流：

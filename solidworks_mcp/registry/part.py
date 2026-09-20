@@ -46,6 +46,9 @@ from solidworks_mcp.solidworks_api.part import (
     create_swept,
     get_mass_properties,
 )
+from solidworks_mcp.solidworks_api.pattern_ui import (
+    create_circular_pattern,
+)
 from solidworks_mcp.solidworks_api.pattern import (
     AnnularRing,
     build_annular_layout,
@@ -449,6 +452,30 @@ def solidworks_pattern_annular_layout(
     )
 
 
+def solidworks_part_circular_pattern(
+    seed_feature: NonEmptyString,
+    axis_feature: NonEmptyString,
+    instance_count: int,
+    angle_deg: float = 360.0,
+    equal_spacing: bool = True,
+    pattern_name: Optional[NonEmptyString] = None,
+    launch_if_needed: Optional[bool] = None,
+) -> ToolResult:
+    """Circular pattern of a feature around an axis (drives the PM pane UI; needs a visible, maximized SolidWorks window and pywinauto)."""
+    return _call_connected(
+        lambda sw: create_circular_pattern(
+            sw,
+            seed_feature,
+            axis_feature,
+            instance_count,
+            angle_deg,
+            equal_spacing,
+            pattern_name,
+        ),
+        launch_if_needed,
+    )
+
+
 def solidworks_part_create_annular_pattern(
     rings: List[AnnularRing],
     plane: NonEmptyString = "top",
@@ -615,6 +642,11 @@ def register(mcp) -> None:
         annotations=DESTRUCTIVE,
         structured_output=True,
     )(solidworks_part_create_annular_pattern)
+    mcp.tool(
+        title="Create circular pattern",
+        annotations=STATE_CHANGE,
+        structured_output=True,
+    )(solidworks_part_circular_pattern)
     mcp.tool(
         title="Sheet-metal base flange", annotations=STATE_CHANGE, structured_output=True
     )(solidworks_sheet_metal_base_flange)
