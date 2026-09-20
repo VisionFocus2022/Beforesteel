@@ -124,7 +124,7 @@ class TestSuccessPath(unittest.TestCase):
         model, sw = _make()
         with patch.object(pattern_ui, "drive_pattern_pane") as drive:
 
-            def grow(window, count, equal):
+            def grow(*args):
                 model.features.append(FakeFeature("阵列(圆周)1"))
                 model.features[-2]._next = model.features[-1]
 
@@ -143,13 +143,13 @@ class TestSuccessPath(unittest.TestCase):
                 ("AxisToPattern", "AXIS", True, 1),
             ],
         )
-        drive.assert_called_once_with("SOLIDWORKS.*", 4, True)
+        drive.assert_called_once_with("SOLIDWORKS.*", "HoleToPattern", "AxisToPattern", 4, True)
 
     def test_rename_on_success(self):
         model, sw = _make()
         with patch.object(pattern_ui, "drive_pattern_pane") as drive:
 
-            def grow(window, count, equal):
+            def grow(*args):
                 model.features.append(FakeFeature("阵列(圆周)1"))
                 model.features[-2]._next = model.features[-1]
 

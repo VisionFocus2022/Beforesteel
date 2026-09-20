@@ -45,7 +45,11 @@ def _selection_nothing() -> Any:
 
 
 def drive_pattern_pane(
-    window_title_regex: str, instance_count: int, equal_spacing: bool
+    window_title_regex: str,
+    seed_feature: str,
+    axis_feature: str,
+    instance_count: int,
+    equal_spacing: bool,
 ) -> None:
     """打开圆周阵列 PM 并提交（UI 通道；测试经 monkeypatch 替换）。
 
@@ -79,6 +83,28 @@ def drive_pattern_pane(
         win32gui.EnumWindows(cb, None)
         return out
 
+    def _wait_popup(timeout: float) -> bool:
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if _popup_hwnds():
+                return True
+            time.sleep(0.25)
+        return False
+
+    def _ensure_foreground(timeout: float = 6.0) -> None:
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            try:
+                if win32gui.GetForegroundWindow() == win.handle:
+                    return
+            except Exception:
+                pass
+            try:
+                win.set_focus()
+            except Exception:
+                pass
+            time.sleep(0.5)
+
     def _click_menu_item(target: str) -> bool:
         for hwnd in _popup_hwnds():
             try:
@@ -95,37 +121,65 @@ def drive_pattern_pane(
 
     app = Application(backend="uia").connect(title_re=window_title_regex, timeout=10)
     win = app.window(title_re=window_title_regex)
-    win.set_focus()
-    time.sleep(0.5)
+    try:
+        win.maximize()  # 归一化偏移锚定（非最大化窗口布局不同，实测偏移全错）
+    except Exception:
+        pass
+    time.sleep(1.0)
+    _ensure_foreground()
 
-    # 插入 → 阵列/镜向 → 圆周阵列
+    # 插入 → 阵列/镜向 → 圆周阵列（后台线程焦点竞态：开菜单轮询+重试）
     send_keys("%i")
-    time.sleep(0.9)
+    if not _wait_popup(3.0):
+        send_keys("{ESC}")
+        time.sleep(0.5)
+        _ensure_foreground()
+        send_keys("%i")
+        if not _wait_popup(3.0):
+            raise RuntimeError("插入菜单未能打开（焦点抢占）")
+    time.sleep(0.4)
     if not _click_menu_item("阵列/镜向"):
         raise RuntimeError("插入菜单中未找到「阵列/镜向」")
-    time.sleep(0.9)
+    if not _wait_popup(2.5):
+        raise RuntimeError("「阵列/镜向」子菜单未能打开")
+    time.sleep(0.3)
     if not _click_menu_item("圆周阵列"):
         raise RuntimeError("阵列/镜向菜单中未找到「圆周阵列」")
     time.sleep(2.5)  # PM 面板展开
 
-    rect = win.element_info.rectangle
-    ox, oy = rect.left, rect.top
-
-    if equal_spacing:
-        dx, dy = PM_OFFSETS["equal_spacing"]
-        mouse.click(coords=(ox + dx, oy + dy))
+    def _click(offset) -> None:
+        dx, dy = offset
+        mouse.click(coords=(win.element_info.rectangle.left + dx,
+                            win.element_info.rectangle.top + dy))
         time.sleep(0.6)
-    dx, dy = PM_OFFSETS["instance_count"]
-    mouse.click(coords=(ox + dx, oy + dy))
-    time.sleep(0.4)
+
+    def _tree_click(name: str) -> None:
+        for it in win.descendants(control_type="TreeItem"):
+            try:
+                n = it.element_info.name or ""
+            except Exception:
+                continue
+            if name in n:
+                it.click_input()
+                time.sleep(1.0)
+                return
+        raise RuntimeError(f"特征树中未找到 {name!r}")
+
+    # 预选择不自动流入 PM 框（实测）——点框→点树逐项填充
+    _click((120, 327))                      # 1. 阵列轴框
+    _click((22, 208))                       # 2. FeatureManager 树图标
+    _tree_click(axis_feature)               # 3. 树选轴
+    _click((130, 538))                      # 4. 特征和面框
+    _tree_click(seed_feature)               # 5. 树选种子
+    if equal_spacing:
+        _click((43, 378))                   # 6a. 等间距
+    _click((120, 440))                      # 6b. 实例数框
     send_keys("^a")
     send_keys(str(instance_count))
     time.sleep(0.3)
     send_keys("{TAB}")
     time.sleep(0.6)
-
-    dx, dy = PM_OFFSETS["ok"]
-    mouse.click(coords=(ox + dx, oy + dy))
+    _click((17, 265))                       # OK 勾
     time.sleep(3.0)  # 等待重建
 
 
@@ -197,7 +251,9 @@ def create_circular_pattern(
         )
 
     try:
-        drive_pattern_pane("SOLIDWORKS.*", instance_count, equal_spacing)
+        drive_pattern_pane(
+            "SOLIDWORKS.*", seed_feature, axis_feature, instance_count, equal_spacing
+        )
     except Exception as exc:  # noqa: BLE001 — 驱动失败统一撤面板
         esc_cancel_pane()
         model.ClearSelection2(True)
