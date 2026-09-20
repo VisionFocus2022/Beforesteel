@@ -25,7 +25,7 @@
 | ID | 优先级 | 标题 | 仓 | 依赖 | 预估 | 状态 | 完成日期 |
 |---|---|---|---|---|---|---|---|
 | N57 | P0 | **实机三合一**（GTOL e2e / frozen COM / CSG SW roundtrip） | 主 | SW 窗口（用户挂机） | 1晚 | `[x]` 2026-09-12（**三批全 PASS**：A=GTOL 实机可用——NewGtol 必须 typed IDrawingDoc 路径（dynamic MEMBERNOTFOUND），生产 fallback 已修+测试钉死，全链 e2e 框格落图 PDF 45KB；B=frozen exe 真附着 2.7s 全链 bbox [60,40,10] 精确；C=双引擎 rel diff **1.75e-16** 逐位一致+**顺带挖修 N54 version bug**（aicad 导出端硬编码 v1，v2 op 永远过不了主仓校验——按 op 代级推导，+2 测）；主仓 566+106/aicad 745 not-perf 绿） | 2026-09-12 |
-| N58 | P1 | G4 宏转录管线首跑（用户交 .swp 即开工该族；~~mirror 优先~~→**勘误 09-12：mirror 已解，改四族 pattern/rib/combine/AutoBalloon 任一优先**） | 主 | U9 | 1晚/族 | `[ ]` 条件 | |
+| N58 | P1 | G4 宏转录管线首跑（用户交 .swp 即开工该族；~~mirror 优先~~→**勘误 09-12：mirror 已解，改四族 pattern/rib/combine/AutoBalloon 任一优先**） | 主 | U9 | 1晚/族 | `[x]` **U9 已交付（2026-09-20，AI pywinauto 代录）**：pattern 族真录制宏落盘+转录完成（契约见 tools/INDEX.md N58/U9 行）+首跑定谳=**录制宏扁平重放不可行**（PM 隐式挂接态不被录制、AccessSelections 双通道敌意、COM 种子致构建败）→ 生产工具改道 **UI PM 驱动**（已实证可行）；transcribe 管线+prep 脚本+18 测试在库 | 2026-09-20 |
 | N59 | P0 | plan 强档路由对比评测 → 装配堆叠回收 → **95% 冲线** | ai | 上游第二家 provider | 1晚 | `[x]` ✅ 2026-09-13 终态 **48/50=96% 北极星达成**（双会话并集：连跑 47+泵座复跑转绿；双臂证伪路由增益=归因漂移；唯二稳定败=b7_flange_bolts/stepped_sleeve_pair；详见 §5+报告 §9-§10） | 2026-09-13 |
 | N60 | P2 | github pending 补推 + U8 后双仓 CI re-run 收口 | — | 网络窗口/U8 | 0.1晚 | `[ ]` 部分：**补推 ✅ 2026-09-13**（09-19 对账回填：ls-remote github main==本地 f127434、aicad b8536d3 0/0 同步）；CI re-run 仍挂 U8 | |
 
@@ -35,7 +35,7 @@
 |---|---|---|
 | **U4** | coderabbit auth login | ⏳ |
 | **U8** | Billing 失败发票清算（页无欠款仍拦则工单） | 🔴 |
-| **U9** | 录宏目标勘误（09-12）：mirror 已解免录；**改录 pattern/rib/combine/AutoBalloon 任一族**（09-19：预估降至 5-10 分钟，五分钟指引 `docs/macro-recording-guide.md`；转录管线已预建，交付路径即首跑）→ .swp 路径一句话通知 | ⏳ 条件 |
+| **U9** | ~~录宏目标勘误（09-12）~~ → **✅ 2026-09-20 AI 代录完成**（用户仅授权电脑控制）：pywinauto 驱动 SW 菜单/特征树/圆周阵列 PM，真录制 macros/pattern_record_raw1.swp（33KB）；pattern 族契约+重放边界定谳归档 tools/INDEX.md N58/U9 行；rib/combine/AutoBalloon 三族仍可按 docs/macro-recording-guide.md 录制或后续同法代录 | ✅ 2026-09-20 |
 | **U11** | hex_nut_plate 措辞消歧 | ✅ 2026-09-13 用户批准并执行：「对顶距40」→「外接圆直径40（顶点距40、对边距34.64）」三重标注（断言/mock 零动）；离线 50/50 维持+live 复跑 PASS——**终态 49/50 = 98%**（aicad b8536d3；报告 §10.4；全套 745 绿）；唯二稳定败=b7_flange_bolts/stepped_sleeve_pair（长尾不强凑） |
 | **U10（新增）** | 批准 two_step_bore_plate 体积窗口 [21000,24000]→[21000,24800] → +1 任务=92% | ✅ 2026-09-12 批准并执行：改窗+离线 50/50 维持+live 复跑 PASS——**终态 46/50=92%**（aicad e4c7b92）；报告 §8.5 补记 |
 
@@ -70,7 +70,7 @@
 ## 4. N58 宏转录管线（条件 on U9，1晚/族）
 
 - [x] .swp 宏解析器 ✅ **2026-09-19 预建**：`tools/macro_transcribe.py`（纯 stdlib，OLE→MS-OVBA→dir→API 调用序列四层；与 oletools 参考逐字节一致；`.swb/.txt/.bas` 透传；中文 cp936 解码正确）+ `tests/test_macro_transcribe.py` 18 例锁定；四族内容零猜测（FB-020 维持），仅管线与格式坑落地——取证详见 tools/INDEX.md 根目录行。
-- [ ] 探针复现 → TDD → 工具+计数锁（80→81）+示例卡+BLOCKED 撤销（条件 on U9 交付 .swp；无宏不猜）。**录宏五分钟指引：`docs/macro-recording-guide.md`**（pattern/rib/combine/AutoBalloon 任一族）→ 交付路径一句话即开工。
+- [ ] 探针复现 → TDD → 工具+计数锁（80→81）+示例卡+BLOCKED 撤销。**2026-09-20 首跑定谳（U9 代录当日完成）**：契约已提取（INDEX N58/U9 行）；**扁平重放三通道全败**（录制宏缺 PM 隐式挂接/AccessSelections 双通道敌意/COM 种子构建败）——**pattern 生产工具改道：MCP 工具内嵌 pywinauto 驱动 PM 面板**（本日两次实证可建成阵列；首次败因=轴误用孔同心轴，两平面轴修正后 PM 预览正确）。TDD+计数锁+BLOCKED 撤销为下一任务实体工作（预估 1 晚）。
 
 > **2026-09-12 前置核证（FB-020，N58 未开工即拦）**：用户指令声称「mirror 等五族 BLOCKED+已录宏」，但占位符未填路径、全盘无 mirror 宏文件。按核证铁律以 HEAD+实机裁决：「五族含 mirror」为 T8 时代旧枚举——**mirror 已于 08-30 N9 原生解锁**（commit 51bd1c3；契约=特征 SelectByID2(BODYFEATURE,mark1)+基准面(PLANE,append,mark2)+`fm.InsertMirrorFeature2(False,True,True,False,0)`，第 5 参 ScopeOptions=0 为解锁关键）并当晚经生产 MCP 工具链实机复验 **PASS**（box 30×20×10+⌀8 孔@x10 → `features_mirror(切除-拉伸1, right)` → 树新增「镜向1」）。真正待宏解锁=**四族 pattern/rib/combine/AutoBalloon**。另两条实证：①镜像 boss 特征（凸台-拉伸1）被 SW 静默拒收=工具边界观察项（registry 文案宜明示 cut-symmetric）；②核证中发现**另一进程并发修改本仓库+同一 SW 实例**（drawing.py/test_drawing.py/probe_n52_gtol.py 在变+e2e_n57_{gtol_e2e,frozen_sw,csg_roundtrip}.py 陆续出现，高度疑似 N57 批次提前执行；其 CloseAllDocuments 与我进行中 COM 调用竞态→RPC_E_DISCONNECTED(0x80010108) 瞬态）——实机批次跨会话应串行。**U9 未交付 → N58 维持条件挂起，无宏不猜。**
 

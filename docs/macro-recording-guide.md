@@ -1,8 +1,12 @@
 # U9 录宏交付指南（N58 宏转录管线解锁四族）
 
+> **2026-09-20 进展**：**pattern 族已由 AI 代录完成**（pywinauto 驱动 SW UI 真录制，
+> 产物 `E:\SolidWorks 2026\SolidWorksMCP\macros\pattern_record_raw1.swp`，契约已转录归档
+> tools/INDEX.md N58/U9 行）。**pattern 无需您再录**。rib / combine / AutoBalloon 三族
+> 仍按本指南录制，或留待后续会话同法代录。
+>
 > 2026-09-19：转录管线已预建就绪（`tools/macro_transcribe.py`，18 测试锁定，
 > 与 oletools 参考实现逐字节一致；`.swp` / `.swb` / `.txt` / `.bas` 全支持）。
-> **您只需按下文录制一个宏（约 5-10 分钟），把文件路径告诉 AI，N58 当天即可开工。**
 
 ## 为什么需要您录宏（无宏不猜）
 
