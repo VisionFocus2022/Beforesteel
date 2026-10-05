@@ -11,7 +11,7 @@ MCP 服务器（官方 Python SDK，stdio）：把 SolidWorks 2026 COM 自动化
 | `solidworks_mcp/server.py` | 门面（~206 行）：FastMCP 实例 + 3 resources + stdio 入口 + 全量 re-export |
 | `solidworks_mcp/registry/` | **81 工具按域落此**（N14；默认注册，开产品工具 83）：`base.py` 共享类型/执行件 + `part/assembly/drawing/features/file_io/misc/properties/products/prompts` 域模块；新工具加域模块，别加 server.py |
 | `solidworks_mcp/solidworks_api/` | COM 实现 16 模块（app/design/drawing/assembly/features/pattern/…） |
-| `solidworks_mcp/examples/` | 产品专用工具（ring_light）——env 门控，默认不注册 |
+| `solidworks_mcp/products/` | 产品专用工具（ring_light；2026-10-05 由 examples/ 更名）——env 门控，默认不注册 |
 | `tests/` | 单元测试（mock COM，无需 SW 实机） |
 | `tools/` | 探针（`probe_*/`，实机 API 取证）与验证脚本（`INDEX.md` 索引） |
 | `docs/adr/` | 冻结决策（0009-0012） |
@@ -20,15 +20,17 @@ MCP 服务器（官方 Python SDK，stdio）：把 SolidWorks 2026 COM 自动化
 ## 测试与基线
 
 ```powershell
-venv\Scripts\python.exe -m pytest tests/ -q     # 594 passed + 107 subtests（~9s，2026-09-20 N58 pattern 工具后全绿）
+venv\Scripts\python.exe -m pytest tests/ -q     # 636 passed + 218 subtests（2026-10-05 第四波收尾后全绿）
+venv\Scripts\python.exe -m pytest tests/ -q -m "not real_sw"   # CI 形态（跳过实机层）
 venv\Scripts\python.exe tools\e2e_sw_smoke.py   # 实机 e2e（需 SW 运行；tracked 台账 output/e2e-summary.md）
 ```
 
-- 覆盖率 CI 硬门 ≥80%（pyproject fail_under；实测 87%，2026-09-06 专家团实测——质量目标 89%，勿写成红线）。
+- 覆盖率 CI 硬门 ≥80%（pyproject fail_under；实测 87%，2026-10-05 补测 R1-R4 后实测——质量目标 89%，勿写成红线）。
 - **CI 已激活（2026-09-02 全绿）**：GitHub Actions `VisionFocus2022/SolidWorksMCP`
   windows runner——pytest+coverage≥80+pip-audit；推送 main 自动跑。
-- 工具计数被 5 处测试钉死（81 默认 / 83 开产品工具）——改工具数先改
-  `tests/test_infrastructure.py` 与 `tests/test_server.py` 断言。
+- 工具计数收敛为单点事实源 `tests/_counts.py`（81 默认 / 83 开产品工具）——
+  改工具数只改 `_counts.py` 与 AGENTS.md 首行计数（R3 收敛，2026-10-05；
+  此前 5 处散落硬编码已两次同源复发漂移）。
 - capabilities 与实现由 `tests/test_capabilities_sync.py` 锁定，勿手写漂移。
 - CI runner 的 tempfile 基址是 8.3 短名（RUNNER~1）：路径断言必须走
   `normalize_path` 规范形（tests/test_hardening.py 的教训，2026-09-02）。
@@ -40,7 +42,11 @@ venv\Scripts\python.exe tools\e2e_sw_smoke.py   # 实机 e2e（需 SW 运行；t
 
 ## 安全红线
 
-1. COM 调用必须经 `run_com(...)`（超时默认 120s×3，毒化退程 `SOLIDWORKS_MCP_POISONED_EXIT=1`）。
+1. COM 调用必须经 `run_com(...)`（超时默认 120s（P-2 核实：无×3 重试语义，文档曾超前于代码）；毒化退程 `SOLIDWORKS_MCP_POISONED_EXIT=1`）。
+   **毒化 SLA（C-2，2026-10-05）**：超时毒化记 FATAL 日志并暴露于 `solidworks://status`
+   的 `poisoned` 字段；后续调用入队前探测——worker 存活且队列清空则自动解除（滞留
+   调用最终返回的情形）。worker 已死/队列积压时毒化不可自愈，**重启进程是唯一解**：
+   stdio 宿主应设置 `SOLIDWORKS_MCP_POISONED_EXIT=1` 让 supervisor 自动重启本进程。
 2. 文件操作必须在 `allowed_root` 内。
 3. 破坏性工具标 `DESTRUCTIVE`。
 4. MCP 入参 mm，COM 层 m——换算在实现层完成。

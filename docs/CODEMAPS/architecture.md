@@ -1,5 +1,10 @@
 <!-- Generated: 2026-08-28 | Files scanned: 43 .py | Tools: 25 | Tests: 191 passed | Token estimate: ~700 -->
 
+> ⚠️ **本快照已过时（2026-08-28 生成，停留在 25 工具时代）**——当前代码为
+> 81/83 工具 + `server → registry → solidworks_api → utils → config` 五层
+> （N14 拆分引入 registry 层；产品包已更名 products/，空壳 tools/ 已删除）。
+> **架构地图以 `AGENTS.md` 为准**；本文件仅存档历史形态，待重生成。
+
 # Architecture
 
 ## System

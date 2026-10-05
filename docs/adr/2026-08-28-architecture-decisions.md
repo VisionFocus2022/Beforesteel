@@ -25,12 +25,13 @@
 - **决策**：全程 `Dispatch`/`GetActiveObject` 晚绑定；用到的 SW 枚举常量手工镜像，**集中存放于 [solidworks_api/constants.py](../solidworks_mcp/solidworks_api/constants.py)**（2026-08-28 前曾分散在 5+ 个文件，已收敛）。pywin32 属性/方法暴露差异由 `call_or_value` 统一适配。
 - **后果**：零部署依赖、跨 SW 小版本稳健；代价是无 IDE 常量提示、参数个数错误只能在运行期暴露（由 FakeModel 双打测试兜底）。`_band_crosses_mount_zone` 恒 True 期间观察到的 FeatureRevolve2 晚绑定被拒现象即源于此，v1 因此降级为 24 环带近似。
 
-# ADR-0003：产品专用工具物理隔离到 examples 子包
+# ADR-0003：产品专用工具物理隔离到 products 子包（原 examples）
 
-- **状态**：已接受（2026-08-28，用户裁决"子包隔离+保留工具"）
+- **状态**：已接受（2026-08-28，用户裁决"子包隔离+保留工具"；2026-10-05 更名 examples→products）
 - **背景**：ring_light v1/v3 是 MV-LRSS-H-80-W 环形灯产品的一次性设计工具（1439 行、占源码 37%），与通用建模工具混在 `solidworks_api/` 里侵蚀了分层边界。
-- **决策**：两个模块迁至 [solidworks_mcp/examples/](../solidworks_mcp/examples/)；server 继续注册全部 22 个工具（**行为零变化**）；包 docstring 声明边界——新的通用能力进 `solidworks_api`，一次性产品案例进 `examples`。
+- **决策**：两个模块迁至产品子包；server 继续注册全部工具（**行为零变化**）；包 docstring 声明边界——新的通用能力进 `solidworks_api`，一次性产品案例进产品包。
 - **后果**：未来若要注销这两个工具，只需删 server.py 的两行 import 与两个注册函数；反向（迁回）同样便宜。备选方案（删除 v1 / 完全移出并注销 / 维持原位）见架构审查文档 §11.4 P1-4。
+- **增补（2026-10-05，工程审查 A-2 清障）**：`examples/` 更名 `products/`——该包被 `registry/products.py` 无条件 import 进生产进程，"示例"之名名不副实；更名后目录语义与职责对齐（同步删除了 N14 拆分遗留的空壳 `tools/` 目录）。
 
 # ADR-0004：路径校验采用逐组件解析，禁止跨链接的词法折叠
 
