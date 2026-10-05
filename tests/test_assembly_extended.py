@@ -836,6 +836,20 @@ class TestN8ErrorBranches(unittest.TestCase):
 
         self.assertEqual(_walk_feature_names(OddNameDoc()), {"配合"})
 
+    def test_feature_name_exists_matches_full_walk(self):
+        """P-1 回归（2026-10-05）：早停探针与全树 walk 成员检查等价
+        （含一级子特征），delete_mate 删后复检语义不变。"""
+        from solidworks_mcp.solidworks_api.assembly import (
+            _feature_name_exists,
+            _walk_feature_names,
+        )
+
+        doc = FakeAsmDoc(mates=["重合1", "距离1"])
+        full = _walk_feature_names(doc)
+        for name in ("重合1", "距离1", "不存在"):
+            with self.subTest(name=name):
+                self.assertEqual(_feature_name_exists(doc, name), name in full)
+
     # --- delete_mate / move / rotate：SW 未运行与参数闸门 ---
 
     def test_delete_mate_not_running_is_structured(self):

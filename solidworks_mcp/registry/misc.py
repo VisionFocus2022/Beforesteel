@@ -1,6 +1,6 @@
 """Session, capabilities, and measurement tools (registry/misc, N14).
 
-``solidworks_connect`` reuses :func:`_call_connected` (N14 step 4) so the
+``solidworks_connect`` reuses :func:`call_connected` (N14 step 4) so the
 poisoned/timeout/unexpected-error handling lives in one place; the second
 ``connect`` returns the cached-connection result, so a successful call
 reports "Already connected" with the live version data.
@@ -23,15 +23,15 @@ from .base import (
     STATE_CHANGE,
     FiniteMM,
     ToolResult,
-    _active_document_data,
-    _call_connected,
+    active_document_data,
+    call_connected,
     _capabilities,
 )
 
 
 def solidworks_connect(launch_if_needed: Optional[bool] = None) -> ToolResult:
     """Connect to SolidWorks; null uses SOLIDWORKS_MCP_AUTO_START."""
-    return _call_connected(
+    return call_connected(
         lambda sw: sw.connect(launch_if_needed=launch_if_needed),
         launch_if_needed,
     )
@@ -41,7 +41,7 @@ def solidworks_get_active_document(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Return the active document title, path, numeric type, and type name."""
-    return _call_connected(_active_document_data, launch_if_needed)
+    return call_connected(active_document_data, launch_if_needed)
 
 
 def solidworks_design_capabilities() -> ToolResult:
@@ -64,7 +64,7 @@ def solidworks_get_bounding_box(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Merged solid-body bounding box in mm (min/max/size/center)."""
-    return _call_connected(get_bounding_box, launch_if_needed)
+    return call_connected(get_bounding_box, launch_if_needed)
 
 
 def register(mcp) -> None:

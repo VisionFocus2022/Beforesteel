@@ -14,6 +14,27 @@ from solidworks_mcp.utils.com import call_or_value
 
 logger = logging.getLogger(__name__)
 
+# M-4 (2026-10-05): module-level lazy singleton — WinDLL handles and the
+# ctypes prototypes were previously rebuilt on every probe call; they are
+# process-stable, so declare them once.
+_kernel32: Any = None
+
+
+def _get_kernel32() -> Any:
+    """The process-wide kernel32 handle with session prototypes declared."""
+    global _kernel32
+    if _kernel32 is None:
+        dll = ctypes.WinDLL("kernel32", use_last_error=True)
+        dll.GetCurrentProcessId.argtypes = []
+        dll.GetCurrentProcessId.restype = wintypes.DWORD
+        dll.ProcessIdToSessionId.argtypes = [
+            wintypes.DWORD,
+            ctypes.POINTER(wintypes.DWORD),
+        ]
+        dll.ProcessIdToSessionId.restype = wintypes.BOOL
+        _kernel32 = dll
+    return _kernel32
+
 
 def _same_session(pid: int, kernel32: Any = None) -> bool:
     """Return True when ``pid`` belongs to the current Windows session.
@@ -22,16 +43,7 @@ def _same_session(pid: int, kernel32: Any = None) -> bool:
     SLDWORKS.exe started by another user (fast user switching / RDP) must
     not be mistaken for a SolidWorks instance we could attach to.
     """
-    dll = kernel32 if kernel32 is not None else ctypes.WinDLL(
-        "kernel32", use_last_error=True
-    )
-    dll.GetCurrentProcessId.argtypes = []
-    dll.GetCurrentProcessId.restype = wintypes.DWORD
-    dll.ProcessIdToSessionId.argtypes = [
-        wintypes.DWORD,
-        ctypes.POINTER(wintypes.DWORD),
-    ]
-    dll.ProcessIdToSessionId.restype = wintypes.BOOL
+    dll = kernel32 if kernel32 is not None else _get_kernel32()
     own_session = wintypes.DWORD(0)
     session = wintypes.DWORD(0)
     if not dll.ProcessIdToSessionId(
@@ -63,7 +75,7 @@ def _is_solidworks_process_running() -> bool:
             ("szExeFile", wintypes.WCHAR * max_path),
         ]
 
-    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32 = _get_kernel32()  # M-4: snapshot prototypes ride the singleton
     kernel32.CreateToolhelp32Snapshot.argtypes = [wintypes.DWORD, wintypes.DWORD]
     kernel32.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
     kernel32.Process32FirstW.argtypes = [wintypes.HANDLE, ctypes.c_void_p]

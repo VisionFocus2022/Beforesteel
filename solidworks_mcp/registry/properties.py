@@ -25,7 +25,7 @@ from .base import (
     STATE_CHANGE,
     NonEmptyString,
     ToolResult,
-    _call_connected,
+    call_connected,
 )
 
 
@@ -34,7 +34,7 @@ def solidworks_part_set_material(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Assign a material from the SOLIDWORKS MATERIALS library (Chinese names, e.g. 合金钢)."""
-    return _call_connected(
+    return call_connected(
         lambda sw: set_material(sw, material_name),
         launch_if_needed,
     )
@@ -44,7 +44,7 @@ def solidworks_part_get_material(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Read the active part's material (name, database, configuration)."""
-    return _call_connected(get_material, launch_if_needed)
+    return call_connected(get_material, launch_if_needed)
 
 
 def solidworks_part_set_custom_property(
@@ -53,7 +53,7 @@ def solidworks_part_set_custom_property(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Set a document-level custom property (text type, overwrite)."""
-    return _call_connected(
+    return call_connected(
         lambda sw: set_custom_property(sw, name, value),
         launch_if_needed,
     )
@@ -63,7 +63,7 @@ def solidworks_part_get_custom_properties(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """List document-level custom properties with resolved values."""
-    return _call_connected(get_custom_properties, launch_if_needed)
+    return call_connected(get_custom_properties, launch_if_needed)
 
 
 def solidworks_part_add_equation(
@@ -71,7 +71,7 @@ def solidworks_part_add_equation(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Append an equation or global variable, e.g. '"x" = 50'."""
-    return _call_connected(
+    return call_connected(
         lambda sw: add_equation(sw, equation),
         launch_if_needed,
     )
@@ -81,7 +81,7 @@ def solidworks_part_list_equations(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """List all equations and global variables with solved values."""
-    return _call_connected(list_equations, launch_if_needed)
+    return call_connected(list_equations, launch_if_needed)
 
 
 def solidworks_part_add_configuration(
@@ -89,7 +89,7 @@ def solidworks_part_add_configuration(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Add a derived configuration to the active document."""
-    return _call_connected(
+    return call_connected(
         lambda sw: add_configuration(sw, name),
         launch_if_needed,
     )
@@ -100,7 +100,7 @@ def solidworks_part_activate_configuration(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Activate a named configuration (verified via ActiveConfiguration read-back)."""
-    return _call_connected(
+    return call_connected(
         lambda sw: activate_configuration(sw, name),
         launch_if_needed,
     )
@@ -112,7 +112,7 @@ def solidworks_part_edit_equation(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Replace the equation text at a zero-based index (verified via read-back)."""
-    return _call_connected(
+    return call_connected(
         lambda sw: edit_equation(sw, index, new_text),
         launch_if_needed,
     )
@@ -126,7 +126,7 @@ def solidworks_part_delete_equation(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Delete an equation by zero-based index or exact text (verified via GetCount)."""
-    return _call_connected(
+    return call_connected(
         lambda sw: delete_equation(sw, index_or_text),
         launch_if_needed,
     )

@@ -23,7 +23,7 @@ from .base import (
     STATE_CHANGE,
     NonEmptyString,
     ToolResult,
-    _call_connected,
+    call_connected,
 )
 
 
@@ -32,7 +32,7 @@ def solidworks_drawing_create_from_part(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Create a drawing (GB A3 template) from a saved part and project three views. The part must be saved before creating the drawing; close the drawing (solidworks_file_close) when done to release file locks."""
-    return _call_connected(
+    return call_connected(
         lambda sw: create_drawing_from_part(sw, part_path),
         launch_if_needed,
     )
@@ -42,7 +42,7 @@ def solidworks_drawing_insert_dimensions(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Insert the model's dimensions into the active drawing's views."""
-    return _call_connected(insert_model_dimensions, launch_if_needed)
+    return call_connected(insert_model_dimensions, launch_if_needed)
 
 
 def solidworks_drawing_export_pdf(
@@ -51,7 +51,7 @@ def solidworks_drawing_export_pdf(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Export the active drawing to PDF under allowed_root."""
-    return _call_connected(
+    return call_connected(
         lambda sw: export_drawing_pdf(sw, file_path, overwrite_confirm),
         launch_if_needed,
     )
@@ -63,7 +63,7 @@ def solidworks_drawing_export_png(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Export the active drawing sheet to PNG (raster) under allowed_root."""
-    return _call_connected(
+    return call_connected(
         lambda sw: export_drawing_png(sw, file_path, overwrite_confirm),
         launch_if_needed,
     )
@@ -76,7 +76,7 @@ def solidworks_drawing_organize_dimensions(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Tidy overlapping dimensions in the active drawing: delete same-feature duplicates within each view, then stagger annotations closer than 2 mm apart by shift_step_mm (sheet mm). Run after solidworks_drawing_insert_dimensions; empty view_name processes every view."""
-    return _call_connected(
+    return call_connected(
         lambda sw: organize_dimensions(
             sw, view_name or None, mode, shift_step_mm
         ),
@@ -92,7 +92,7 @@ def solidworks_drawing_insert_section_view(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Create a section view of source_view_name with a straight cut line (vertical/horizontal, offset cut_position_mm in sheet mm from the view anchor; the line is drawn in the blank strip below/left of the view — lines on top of a view never produce a section view). The section view lands 120 mm to the right unless position_xy_mm (sheet mm) is given; SolidWorks assigns the A/B/C label automatically."""
-    return _call_connected(
+    return call_connected(
         lambda sw: insert_section_view(
             sw, source_view_name, cut_position_mm, direction, position_xy_mm
         ),
@@ -107,7 +107,7 @@ def solidworks_drawing_set_tolerance(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Set +/- tolerances (PlusMinus type) on a drawing display dimension. dimension_name matches the FullName exactly or without its trailing part segment (e.g. 'D1@SketchName'); bounds are sheet millimetres and keep their sign (lower_mm=-0.05 renders as -0.05). Readback values are returned."""
-    return _call_connected(
+    return call_connected(
         lambda sw: set_tolerance(sw, dimension_name, upper_mm, lower_mm),
         launch_if_needed,
     )
@@ -121,7 +121,7 @@ def solidworks_drawing_insert_surface_finish(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Insert a surface-finish symbol on the active drawing (default: remove-material Ra symbol). value_um is the Ra value in micrometres (0.008-100); x_mm/y_mm place the symbol in sheet millimetres; symbol picks the shape: basic / remove_material / no_remove_material."""
-    return _call_connected(
+    return call_connected(
         lambda sw: insert_surface_finish(sw, value_um, x_mm, y_mm, symbol),
         launch_if_needed,
     )
@@ -134,7 +134,7 @@ def solidworks_drawing_insert_note(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Insert a plain text note (e.g. technical requirements) on the active drawing at x_mm/y_mm in sheet millimetres."""
-    return _call_connected(
+    return call_connected(
         lambda sw: insert_note(sw, text, x_mm, y_mm),
         launch_if_needed,
     )
@@ -153,7 +153,7 @@ def solidworks_drawing_insert_gtol(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Insert a GD&T feature-control frame (form/orientation/location/runout/profile) on the active drawing. characteristic is one of flatness/straightness/circularity/cylindricity/parallelism/perpendicularity/angularity/position/concentricity/symmetry/profile_line/profile_surface/circular_runout/total_runout; tolerance_mm is the tolerance zone width in sheet millimetres; diameter adds the Ø modifier; material_condition picks none/mmc/rfs/lmc; datum_a/b/c are reference letters. x_mm/y_mm place the frame on the sheet."""
-    return _call_connected(
+    return call_connected(
         lambda sw: insert_gtol(
             sw, characteristic, tolerance_mm, x_mm, y_mm,
             diameter, material_condition, datum_a, datum_b, datum_c,
@@ -170,7 +170,7 @@ def solidworks_drawing_insert_bom_table(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Insert a BOM table (parts-only or top-level) on a named assembly drawing view."""
-    return _call_connected(
+    return call_connected(
         lambda sw: insert_bom_table(sw, view_name, x_mm, y_mm, bom_type),
         launch_if_needed,
     )

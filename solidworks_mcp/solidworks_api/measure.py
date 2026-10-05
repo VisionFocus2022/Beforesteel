@@ -54,7 +54,18 @@ def get_bounding_box(sw_app: SolidWorksApp) -> dict:
         bodies = model.GetBodies2(SW_SOLID_BODY, False)
         if not bodies:
             return error_response("No solid bodies in active document")
-        boxes = [body.GetBodyBox() for body in bodies]
+        # C-7（2026-10-05）：COM 允许退化 body 的 GetBodyBox 返回 None——
+        # 跳过退化体（与全仓退化代理哨兵纪律一致），不再让单个坏体
+        # 炸掉整包测量。
+        boxes = [
+            box for box in (body.GetBodyBox() for body in bodies)
+            if isinstance(box, (list, tuple)) and len(box) >= 6
+        ]
+        if not boxes:
+            return error_response(
+                "Solid bodies returned no usable bounding boxes "
+                "(all degenerate)", code="SW_API_ERROR",
+            )
         mins = [min(box[i] for box in boxes) for i in range(3)]
         maxs = [max(box[i + 3] for box in boxes) for i in range(3)]
         size = [round((maxs[i] - mins[i]) * 1000.0, 6) for i in range(3)]

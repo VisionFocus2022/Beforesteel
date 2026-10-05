@@ -25,7 +25,7 @@ from .base import (
     NonEmptyString,
     SignedMM,
     ToolResult,
-    _call_connected,
+    call_connected,
 )
 
 
@@ -34,7 +34,7 @@ def solidworks_features_rebuild_csg(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Rebuild a cross-engine CSG plan as an SW feature tree (v1: box/cylinder/cone/cut_cylinder stacking semantics; v2 adds polygon_prism and swept_arc ops)."""
-    return _call_connected(
+    return call_connected(
         lambda sw: rebuild_csg_plan(sw, plan),
         launch_if_needed,
     )
@@ -46,7 +46,7 @@ def solidworks_features_mirror(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Mirror a body feature about a datum plane (right/front/top) for cut-symmetric geometry."""
-    return _call_connected(
+    return call_connected(
         lambda sw: mirror_feature(sw, feature_name, plane),
         launch_if_needed,
     )
@@ -59,7 +59,7 @@ def solidworks_features_apply_draft(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Taper a named face by angle_deg using a second named face as the neutral plane (use list_faces to get names)."""
-    return _call_connected(
+    return call_connected(
         lambda sw: apply_draft(sw, draft_face, neutral_face, angle_deg),
         launch_if_needed,
     )
@@ -69,7 +69,7 @@ def solidworks_features_list(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """List feature names in the active document."""
-    return _call_connected(get_features, launch_if_needed)
+    return call_connected(get_features, launch_if_needed)
 
 
 def solidworks_features_get_details(
@@ -77,7 +77,7 @@ def solidworks_features_get_details(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Type, dimensions (mm), and suppression per feature; null describes all. Large models require one COM round-trip per feature; expect slower responses on 1000+ feature parts."""
-    return _call_connected(
+    return call_connected(
         lambda sw: get_feature_details(sw, feature_name),
         launch_if_needed,
     )
@@ -90,7 +90,7 @@ def solidworks_dimension_set(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Set a signed length dimension (mm) and rebuild; optional configuration name activates it first (per-configuration value)."""
-    return _call_connected(
+    return call_connected(
         lambda sw: set_dimension(sw, dimension_full_name, value_mm, configuration),
         launch_if_needed,
     )
@@ -102,7 +102,7 @@ def solidworks_dimension_set_angle(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Set an angle dimension in degrees (converted to radians on the wire) and rebuild."""
-    return _call_connected(
+    return call_connected(
         lambda sw: set_dimension_angle(sw, dimension_full_name, value_deg),
         launch_if_needed,
     )
@@ -113,7 +113,7 @@ def solidworks_feature_delete(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Delete one exactly matched feature from the tree (destructive, no undo guarantee)."""
-    return _call_connected(
+    return call_connected(
         lambda sw: delete_feature(sw, feature_name),
         launch_if_needed,
     )
@@ -125,7 +125,7 @@ def solidworks_feature_rename(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Rename one exactly matched feature in the active document."""
-    return _call_connected(
+    return call_connected(
         lambda sw: rename_feature(sw, old_name, new_name),
         launch_if_needed,
     )
@@ -137,7 +137,7 @@ def solidworks_feature_set_suppression(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Suppress or unsuppress one exactly matched feature."""
-    return _call_connected(
+    return call_connected(
         lambda sw: set_feature_suppression(sw, feature_name, suppressed),
         launch_if_needed,
     )

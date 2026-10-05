@@ -14,7 +14,14 @@ logger = logging.getLogger(__name__)
 
 # Default allowed root directory. All file operations must be under this path
 # unless explicitly relaxed by configuration.
-DEFAULT_ALLOWED_ROOT = os.path.normpath(get_config().allowed_root)
+#
+# P-2 (2026-10-05): evaluated lazily per call — this used to freeze at
+# import time, which made ``SOLIDWORKS_MCP_ALLOWED_ROOT`` set after import
+# (and test monkeypatching) silently ineffective, contradicting the
+# hot-read semantics of ``config.get_config()``. Both now read at call time.
+def default_allowed_root() -> str:
+    """The configured allowed root, read at call time (matches get_config)."""
+    return os.path.normpath(get_config().allowed_root)
 
 
 def _expand_long_path(path: str) -> str:
@@ -92,7 +99,7 @@ def is_path_allowed(
 
     This prevents directory traversal attacks via ``..`` segments.
     """
-    root = normalize_path(allowed_root or DEFAULT_ALLOWED_ROOT)
+    root = normalize_path(allowed_root or default_allowed_root())
     target = normalize_path(path)
     # os.path.commonpath can raise ValueError for mixed drive letters on Windows.
     try:
@@ -114,7 +121,7 @@ def ensure_sink_path(
     where ``normalized`` is the path the caller must hand to SolidWorks.
     """
     normalized = normalize_path(path)
-    if not is_path_allowed(normalized, allowed_root or DEFAULT_ALLOWED_ROOT):
+    if not is_path_allowed(normalized, allowed_root or default_allowed_root()):
         return (
             False,
             f"Path '{path}' resolves outside the allowed root at save time. "
@@ -141,7 +148,7 @@ def validate_path(
 
     normalized = normalize_path(path)
 
-    effective_root = allowed_root or DEFAULT_ALLOWED_ROOT
+    effective_root = allowed_root or default_allowed_root()
 
     if not is_path_allowed(normalized, effective_root):
         return (

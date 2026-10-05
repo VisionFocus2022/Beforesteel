@@ -31,10 +31,10 @@ from solidworks_mcp.utils.security import ensure_sink_path, validate_output_file
 from solidworks_mcp.utils.templates import get_part_template
 from solidworks_mcp.utils.validation import finite_number, positive_number
 
-logger = logging.getLogger(__name__)
-
-
-from solidworks_mcp.solidworks_api.part_support import (  # noqa: F401
+# M-2 (2026-10-05): moved from mid-module to the top import block —
+# part_support does not import part (no cycle), the old mid-file placement
+# only existed to dodge a long-gone reorganisation.
+from solidworks_mcp.solidworks_api.part_support import (
     MAX_FACE_WALK,
     PLANE_CANDIDATES,
     TOP_PLANE_CANDIDATES,
@@ -46,6 +46,10 @@ from solidworks_mcp.solidworks_api.part_support import (  # noqa: F401
     _select_plane,
     _select_top_face,
 )
+
+logger = logging.getLogger(__name__)
+
+
 
 def create_cylinder_on_face(
     sw_app: SolidWorksApp,
@@ -485,9 +489,3 @@ from solidworks_mcp.solidworks_api.part_refgeom import (  # noqa: E402,F401
     create_ref_plane,
 )
 
-
-def _typed_doc2(model: Any) -> Any:
-    """Backward-compat shim: the makepy wrapper now lives in utils.com."""
-    from solidworks_mcp.utils.com import typed_or_dynamic
-
-    return typed_or_dynamic(model, "IModelDoc2")

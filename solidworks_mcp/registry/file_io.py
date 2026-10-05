@@ -19,7 +19,7 @@ from .base import (
     STATE_CHANGE,
     NonEmptyString,
     ToolResult,
-    _call_connected,
+    call_connected,
 )
 
 
@@ -28,7 +28,7 @@ def solidworks_file_open(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Open an existing document under allowed_root."""
-    return _call_connected(lambda sw: open_document(sw, file_path), launch_if_needed)
+    return call_connected(lambda sw: open_document(sw, file_path), launch_if_needed)
 
 
 def solidworks_file_close(
@@ -36,7 +36,7 @@ def solidworks_file_close(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Close the active document; unsaved edits are discarded unless save_changes=true."""
-    return _call_connected(
+    return call_connected(
         lambda sw: close_document(sw, save_changes),
         launch_if_needed,
     )
@@ -47,7 +47,7 @@ def solidworks_file_import_step(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Import an existing .step or .stp file under allowed_root."""
-    return _call_connected(lambda sw: import_step(sw, file_path), launch_if_needed)
+    return call_connected(lambda sw: import_step(sw, file_path), launch_if_needed)
 
 
 def solidworks_file_export_step(
@@ -56,7 +56,7 @@ def solidworks_file_export_step(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Export the active document to .step or .stp under allowed_root."""
-    return _call_connected(
+    return call_connected(
         lambda sw: export_step(sw, file_path, overwrite_confirm),
         launch_if_needed,
     )
@@ -68,7 +68,7 @@ def solidworks_file_export_stl(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Export the active part to .stl under allowed_root."""
-    return _call_connected(
+    return call_connected(
         lambda sw: export_stl(sw, file_path, overwrite_confirm),
         launch_if_needed,
     )
@@ -80,7 +80,7 @@ def solidworks_file_export_dxf(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Export the active drawing to ASCII .dxf (AC1015) under allowed_root. SolidWorks returns a warning code for DXF saves; success is judged by a valid SECTION header in the written file."""
-    return _call_connected(
+    return call_connected(
         lambda sw: export_dxf(sw, file_path, overwrite_confirm),
         launch_if_needed,
     )

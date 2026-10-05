@@ -9,6 +9,7 @@ loaded via importlib. Real-machine integration cases skip when the July
 from __future__ import annotations
 
 import importlib.util
+import os
 import struct
 import unittest
 from pathlib import Path
@@ -16,7 +17,14 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TOOL_PATH = REPO_ROOT / "tools" / "macro_transcribe.py"
 
-VBA_DIR = Path(r"E:\SolidWorks 2026\SolidWorksMCP\VBA")
+# T8（2026-10-05）：本机专用绝对路径 → 环境变量优先 + 仓库相对回退，
+# 其他主机克隆后（放入 VBA/ 录制宏）即可运行真机对照用例。
+VBA_DIR = Path(
+    os.environ.get(
+        "SOLIDWORKS_MCP_VBA_DIR",
+        str(REPO_ROOT.parent / "VBA"),
+    )
+)
 RECORDED_EXTRUDE = VBA_DIR / "RecordedExtrude.swp"
 CONNECTOR_FINAL = VBA_DIR / "CreateConnector_Final.swp"
 CONNECTOR_DEBUG = VBA_DIR / "CreateConnector_Debug.swp"

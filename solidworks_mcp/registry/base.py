@@ -3,8 +3,10 @@
 Everything a domain module needs to define one tool lives here: the
 pydantic type aliases, the structured ToolResult contract, the tool
 annotation presets, and the COM execution helpers. ``mcp`` itself stays
-on the :mod:`solidworks_mcp.server` facade — ``_capabilities`` imports
-it lazily so importing this package never cycles.
+on the :mod:`solidworks_mcp.server` facade — A-3 (2026-10-05) removed
+the old lazy ``base → server`` import: the facade now installs its
+capabilities builder here via :func:`set_capabilities_provider` at
+registration time, so this package never imports upward.
 """
 
 from __future__ import annotations
@@ -35,7 +37,6 @@ from solidworks_mcp.utils.com_executor import (
     run_com,
 )
 from solidworks_mcp.utils.common import error_response, success_response
-from solidworks_mcp.utils.security import DEFAULT_ALLOWED_ROOT
 
 PositiveMM = Annotated[
     float,
@@ -104,11 +105,11 @@ IDEMPOTENT_WRITE = ToolAnnotations(
 DOC_TYPES = {1: "part", 2: "assembly", 3: "drawing"}
 
 
-def _sw():
+def get_sw():
     return get_solidworks_app()
 
 
-def _com_timeout() -> Optional[float]:
+def com_timeout() -> Optional[float]:
     """COM call timeout in seconds; None keeps the historic no-timeout mode."""
     timeout = get_config().com_timeout_seconds
     return timeout if timeout > 0 else None
@@ -132,21 +133,21 @@ def _poisoned_response() -> dict:
     )
 
 
-def _call_connected(
+def call_connected(
     operation: Callable[[Any], dict],
     launch_if_needed: Optional[bool] = None,
 ) -> dict:
     """Connect and execute one operation in the dedicated COM apartment."""
 
     def invoke() -> dict:
-        sw = _sw()
+        sw = get_sw()
         connection = sw.connect(launch_if_needed=launch_if_needed)
         if not connection["success"]:
             return connection
         return operation(sw)
 
     try:
-        return run_com(invoke, timeout=_com_timeout())
+        return run_com(invoke, timeout=com_timeout())
     except ComCallTimeoutError as exc:
         return error_response(str(exc), code="SW_TIMEOUT")
     except ComExecutorPoisonedError:
@@ -160,7 +161,7 @@ def _call_connected(
         )
 
 
-def _active_document_data(sw: Any) -> dict:
+def active_document_data(sw: Any) -> dict:
     model = sw.get_active_document()
     if model is None:
         return success_response(data=None, message="No active document")
@@ -177,66 +178,32 @@ def _active_document_data(sw: Any) -> dict:
     )
 
 
-def _capabilities() -> Dict[str, Any]:
-    from solidworks_mcp.server import mcp  # late: the facade owns the instance
+# A-3（2026-10-05）：capabilities 内容由门面（server.py）在 register_all
+# 时注入——依赖方向保持向下（server → registry），base 不再向上 import。
+_capabilities_provider: Optional[Callable[[], Dict[str, Any]]] = None
 
-    config = get_config()
-    return {
-        "name": "solidworks-mcp",
-        "version": __version__,
-        "solidworks_version": config.solidworks_version,
-        "transport": "stdio",
-        "units": {
-            "tool_length": "millimeter",
-            "solidworks_internal_length": "meter",
-            "angle": "radian unless a tool says otherwise",
-        },
-        "allowed_root": DEFAULT_ALLOWED_ROOT,
-        "auto_start": config.auto_start,
-        "tools": [tool.name for tool in mcp._tool_manager.list_tools()],
-        "design_plan_operations": [
-            {"type": "new_part"},
-            {"type": "box", "width": 100, "depth": 60, "height": 10},
-            {"type": "plate", "width": 100, "depth": 60, "thickness": 6},
-            {"type": "cylinder", "diameter": 20, "height": 40},
-            {"type": "cone", "bottom_diameter": 30, "top_diameter": 10, "height": 40},
-            {
-                "type": "hole",
-                "diameter": 6,
-                "x": 15,
-                "y": 10,
-                "plane": "top",
-                "through_all": True,
-            },
-            {
-                "type": "threaded_hole",
-                "spec": "M6",
-                "x": 15,
-                "y": 10,
-                "plane": "top",
-                "through_all": True,
-            },
-            {
-                "type": "annular_pattern",
-                "rings": [{"radius_mm": 30, "count": 6, "diameter_mm": 6}],
-                "plane": "top",
-                "feature_kind": "cut",
-                "through_all": True,
-            },
-        ],
-        "safety": [
-            "All file paths must stay under allowed_root.",
-            "Outputs require an existing parent directory and the correct extension.",
-            "Overwriting an existing file requires overwrite_confirm=true.",
-            "SolidWorks auto-start follows configuration unless a tool overrides it.",
-            "SolidWorks COM calls are serialized on one STA thread.",
-        ],
-        "limitations": [
-            "Design plans currently support primitive bosses (box/plate/cylinder/cone), round cut holes, ISO threaded holes, and annular patterns.",
-            "solidworks_part_create_ring_light generates a validated spherical-dome LED layout (row_counts is free-form, defaulting to the confirmed 9-row product layout); the native SLDPRT uses 24 annular bands when FeatureRevolve2 is unavailable.",
-            "Assembly mates use the compatibility AddMate5 API for basic mate types.",
-            "Complex surfaces, GD&T feature-control frames, simulation, and PDM are not yet exposed.",
-            "Drawing BOM balloons (AutoBalloon family) are blocked by the SolidWorks API on this machine; use drawing_insert_bom_table instead.",
-            "Exploded-state drawing projection is an open observation item; project from the saved model configuration.",
-        ],
-    }
+
+def set_capabilities_provider(
+    provider: Callable[[], Dict[str, Any]]
+) -> None:
+    """Install the facade-owned capabilities builder (called by server.py)."""
+    global _capabilities_provider
+    _capabilities_provider = provider
+
+
+def _capabilities() -> Dict[str, Any]:
+    if _capabilities_provider is None:
+        raise RuntimeError(
+            "capabilities provider not installed — server.register_all "
+            "must run before _capabilities() is callable"
+        )
+    return _capabilities_provider()
+
+
+# -- M-1 compatibility aliases (2026-10-05) ---------------------------------
+# Historical private names kept for in-flight branches; new code must use
+# the public names above. Removal target: v0.5.0 (same as server re-exports).
+_sw = get_sw
+_com_timeout = com_timeout
+_call_connected = call_connected
+_active_document_data = active_document_data

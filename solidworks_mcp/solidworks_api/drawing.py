@@ -725,7 +725,10 @@ def set_tolerance(
                 dds = call_or_value(view, "GetDisplayDimensions") or ()
             except Exception:
                 continue
-            for dd in dds:
+            # C-8（2026-10-05）：与 _collect_dimension_records 的截断纪律
+            # 对齐——GB 模板单视图注释可上百，无上限的逐 COM 往返在
+            # 大图纸上代价失控。
+            for dd in list(dds)[:MAX_DDS_PER_VIEW]:
                 try:
                     dim = dd.GetDimension2(0)
                     full = call_or_value(dim, "FullName")
