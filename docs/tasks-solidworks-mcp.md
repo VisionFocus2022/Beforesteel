@@ -1,31 +1,39 @@
 # Tasks：SolidWorks MCP Server
 
-**版本**: 1.0  
-**日期**: 2026-07-17  
+**版本**: 1.1（历史归档 + 执行状态回填）
+**日期**: 2026-07-17（v1.0）｜ 2026-10-01（v1.1 回填）
 **关联 PRD**: `E:\SolidWorks 2026\SolidWorksMCP\docs\prd-solidworks-mcp.md`  
 **关联 Design**: `E:\SolidWorks 2026\SolidWorksMCP\docs\design-solidworks-mcp.md`
+
+> 🗄️ **Superseded 声明（2026-10-01）**：本文件是 **MVP 期（2026-07）的历史任务清单**，T1-T15 已全部完成（状态回填见 §1）。后续工作由以下文档接续，请勿在本文件追加任务：
+> - `docs/tasks-solidworksmcp-optimization.md`（三波架构治理，2026-08-28，✅ 大部分完成）
+> - `docs/prd-annular-pattern-tool.md` + `docs/tasks-annular-pattern-tool.md`（独立立项范例，✅）
+> - `output/optimization-plan-<最新日期>.md`（N 系列逐项队列，gitignored，细粒度以此为准）
+> - `docs/roadmap-solidworksmcp-optimization.md`（程序层总览，2026-10-01 起）
 
 ---
 
 ## 1. 任务分解
 
-| 编号 | 任务 | 描述 | 依赖 | 估算 | 风险 |
-|------|------|------|------|------|------|
-| T1 | 初始化项目结构 | 创建 Python 包目录、pyproject.toml、requirements.txt | 无 | S | 低 |
-| T2 | 安装 pywin32 和 fastmcp | 在本地 Python 环境安装依赖并验证可用 | T1 | S | 低 |
-| T3 | 实现 SolidWorks 连接管理 | 封装 `win32com.client.Dispatch`，检测运行状态，获取版本 | T2 | M | 中（依赖 SolidWorks 实际运行） |
-| T4 | 实现模板路径查找工具 | 动态搜索中英文 Part.prtdot 模板路径 | T1 | S | 低 |
-| T5 | 实现路径安全校验工具 | 路径规范化、目录遍历防护、确认模式检查 | T1 | S | 低 |
-| T6 | 实现基础零件建模 API | 圆柱体、立方体创建 | T3, T4 | M | 中 |
-| T7 | 实现文件导入导出 API | 打开 SLDPRT、导入/导出 STEP | T3, T5 | M | 中 |
-| T8 | 实现查询与验证 API | 质量属性、特征树读取 | T3 | M | 中 |
-| T9 | 实现特征树批量操作 API | 重命名、抑制/解除抑制 | T3, T8 | M | 中 |
-| T10 | 实现装配体操作 API | 插入零件、添加基础配合 | T3, T7 | L | 高（配合逻辑复杂） |
-| T11 | 实现 MCP Server 入口 | 使用 fastmcp 注册所有工具 | T6-T10 | M | 中 |
-| T12 | 配置 Claude Code MCP | 编写并应用 claude_mcp_config.json | T11 | S | 低 |
-| T13 | 编写单元测试 | 测试模板查找、路径安全、参数校验 | T1-T5 | M | 低 |
-| T14 | 集成验证 | 启动 SolidWorks，用 Claude Code 自然语言完成 5 个操作 | T12 | L | 高（依赖 SolidWorks 实际环境） |
-| T15 | 编写 README 和使用文档 | 安装、配置、示例命令 | T12 | S | 低 |
+| 编号 | 任务 | 描述 | 依赖 | 估算 | 风险 | 状态 |
+|------|------|------|------|------|------|------|
+| T1 | 初始化项目结构 | 创建 Python 包目录、pyproject.toml、requirements.txt | 无 | S | 低 | ✅ |
+| T2 | 安装 pywin32 和 fastmcp | 在本地 Python 环境安装依赖并验证可用 | T1 | S | 低 | ✅（后切官方 mcp SDK，见 design 附录 A） |
+| T3 | 实现 SolidWorks 连接管理 | 封装 `win32com.client.Dispatch`，检测运行状态，获取版本 | T2 | S→M | 中 | ✅ |
+| T4 | 实现模板路径查找工具 | 动态搜索中英文 Part.prtdot 模板路径 | T1 | S | 低 | ✅（后版本参数化，ADR 动作 18） |
+| T5 | 实现路径安全校验工具 | 路径规范化、目录遍历防护、确认模式检查 | T1 | S | 低 | ✅（后升级逐组件解析，ADR-0004） |
+| T6 | 实现基础零件建模 API | 圆柱体、立方体创建 | T3, T4 | M | 中 | ✅ |
+| T7 | 实现文件导入导出 API | 打开 SLDPRT、导入/导出 STEP | T3, T5 | M | 中 | ✅ |
+| T8 | 实现查询与验证 API | 质量属性、特征树读取 | T3 | M | 中 | ✅ |
+| T9 | 实现特征树批量操作 API | 重命名、抑制/解除抑制 | T3, T8 | M | 中 | ✅ |
+| T10 | 实现装配体操作 API | 插入零件、添加基础配合 | T3, T7 | L | 高 | ✅（后扩展修复闭环，ADR-0010） |
+| T11 | 实现 MCP Server 入口 | 使用 MCP SDK 注册所有工具 | T6-T10 | M | 中 | ✅（后收缩为门面，ADR-0012） |
+| T12 | 配置 Claude Code MCP | 编写并应用 claude_mcp_config.json | T11 | S | 低 | ✅ |
+| T13 | 编写单元测试 | 测试模板查找、路径安全、参数校验 | T1-T5 | M | 低 | ✅（基线已增长至 594 passed + 107 subtests，2026-10-01 实测） |
+| T14 | 集成验证 | 启动 SolidWorks，用 Claude Code 自然语言完成 5 个操作 | T12 | L | 高 | ✅（一次性验证完成；持续验证由 `tools/e2e_sw_smoke.py` + output/e2e-summary.md 台账承接） |
+| T15 | 编写 README 和使用文档 | 安装、配置、示例命令 | T12 | S | 低 | ✅ |
+
+> 状态回填说明（2026-10-01）：以上状态依据 as-built 证据（README/AGENTS.md/design 附录 A/ADR）重建回填，非执行期逐任务记录——本文件属历史归档，重建粒度到任务级即可。
 
 ---
 
@@ -119,4 +127,4 @@ T12 ── T15
 - [✅] 探索门禁已通过
 - [✅] PRD 门禁已通过
 - [✅] Design 门禁已通过
-- [ ] Tasks 门禁待确认
+- [x] Tasks 门禁——**事后追认（2026-10-01）**：v1.0 当时未显式闭合，15 项任务已全部完成并经测试基线验证（见 §1 状态回填），此处补记追认。

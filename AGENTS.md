@@ -27,7 +27,7 @@ venv\Scripts\python.exe tools\e2e_sw_smoke.py   # 实机 e2e（需 SW 运行；t
 - 覆盖率 CI 硬门 ≥80%（pyproject fail_under；实测 87%，2026-09-06 专家团实测——质量目标 89%，勿写成红线）。
 - **CI 已激活（2026-09-02 全绿）**：GitHub Actions `VisionFocus2022/SolidWorksMCP`
   windows runner——pytest+coverage≥80+pip-audit；推送 main 自动跑。
-- 工具计数被 5 处测试钉死（80 默认 / 82 开产品工具）——改工具数先改
+- 工具计数被 5 处测试钉死（81 默认 / 83 开产品工具）——改工具数先改
   `tests/test_infrastructure.py` 与 `tests/test_server.py` 断言。
 - capabilities 与实现由 `tests/test_capabilities_sync.py` 锁定，勿手写漂移。
 - CI runner 的 tempfile 基址是 8.3 短名（RUNNER~1）：路径断言必须走
@@ -53,8 +53,23 @@ venv\Scripts\python.exe tools\e2e_sw_smoke.py   # 实机 e2e（需 SW 运行；t
 本地 commit → 回填状态与执行记录。**总览表状态列必须实时翻转**——它是
 选任务的唯一入口（第四期 I1 漂移教训）。
 
+## 文档写作惯例（docs/，2026-10-01 立）
+
+- 新特性文档**套 aicad 语料模板基因**：L3 基准 `aicad/docs/prd-flex-arm-dual-head-light.md`
+  三件套（定档声明头部/成功指标基线→目标→测量三列表/US 映射/场景三层/
+  NFR 8 类/Q 待决台账/追溯矩阵/自检清单）；L2 基准 `aicad/docs/prd-fa-jig-assembly.md`。
+- 命名 `docs/{prd,design,tasks}-{feature}.md`；头部互链；版本号随门禁裁决升。
+- **门禁裁决回填**进各文档 ✅ 门禁节（日期+结论）；做完的事不允许"待确认"挂死
+  （追认须注明"事后追认"，不伪造当时裁决）。
+- 文档内基线数字与「测试与基线」节同源：凡增减测试数的 commit 同步刷新
+  PRD 成功指标表 / README / 本文件（N36/M-4 纪律的文档面扩展）。
+- 跨改动程序走 `docs/roadmap-{program}.md` 计划层（模板见
+  `docs/roadmap-solidworksmcp-optimization.md`）；细粒度队列仍归 output/ 计划文件。
+
 ## 子仓
 
 `aicad/` 是独立 git 仓库（AI 驱动参数化 CAD：FastAPI + build123d 沙箱 +
 React/three.js + SW COM 桥），有自己的 AGENTS.md 与 ADR；双仓分别提交，
 绝不跨仓。
+> **路径**：`SolidWorksMCP/SolidWorksMCP/aicad/`（嵌套两层，非工作区根
+> `SolidWorksMCP/aicad/`）。自动化脚本若按顶层路径访问会落空。

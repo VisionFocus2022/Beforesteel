@@ -4,12 +4,21 @@
 
 当前版本：0.3.0
 
+> **aicad 子仓路径**：`SolidWorksMCP/SolidWorksMCP/aicad/`（嵌套两层，非工作区根 `SolidWorksMCP/aicad/`）。aicad 是独立 git 仓库，有自己的 AGENTS.md 与 ADR。
+
+## 目标用户
+
+| Persona | 画像 | 核心痛点 | 使用场景 |
+|---------|------|---------|---------|
+| 机械工程师老张 | 35 岁，传统 SolidWorks 用户，每天重复参数化建模 | 标准件建模耗时、重复操作无自动化 | 通过 AI 自然语言快速生成板件/圆柱/孔阵，导出 STEP |
+| AI 应用开发者小李 | 28 岁，构建"对话式 CAD"应用，熟悉 MCP 协议 | SW COM API 学习曲线陡峭、81 工具不知从何下手 | 通过 MCP 协议封装 SW 能力，集成到自己的 AI 应用 |
+
 ## 主要能力
 
 - 使用官方 Python MCP SDK，通过 stdio 提供 81 个 tools、3 个 resources、5 个 prompts
 - 连接正在运行的 SolidWorks，或在明确允许时自动启动
 - 新建零件，创建板件、块体、圆柱体和圆孔
-- 生成 9 行球形穹顶环形灯零件（产品专用工具，代码位于 solidworks_mcp/examples/，默认不注册；设 `SOLIDWORKS_MCP_PRODUCT_TOOLS=ring_light` 后启用，工具数 80 → 82）
+- 生成 9 行球形穹顶环形灯零件（产品专用工具，代码位于 solidworks_mcp/examples/，默认不注册；设 `SOLIDWORKS_MCP_PRODUCT_TOOLS=ring_light` 后启用，工具数 81 → 83）
 - 按顺序执行 new_part、plate、box、cylinder、cone、hole、threaded_hole、annular_pattern 设计计划
 - 打开 SolidWorks 文件，导入 STEP，导出 STEP/STL
 - 查询活动文档、质量属性、特征树和装配零部件
@@ -31,6 +40,31 @@ python -m venv venv
 .\venv\Scripts\activate
 pip install -r requirements.txt
 ~~~
+
+## Quickstart（3 步上手）
+
+1. **启动 SolidWorks 2026**（手动打开，确保 GUI 可见）
+
+2. **配置 MCP 客户端**（以 Claude Desktop 为例，编辑 `%APPDATA%\Claude\claude_desktop_config.json`）：
+
+~~~json
+{
+  "mcpServers": {
+    "solidworks": {
+      "command": "E:\\SolidWorks 2026\\SolidWorksMCP\\SolidWorksMCP\\venv\\Scripts\\python.exe",
+      "args": ["-m", "solidworks_mcp.server"],
+      "env": {
+        "SOLIDWORKS_MCP_ALLOWED_ROOT": "E:\\SolidWorks 2026\\SolidWorksMCP",
+        "SOLIDWORKS_MCP_SOLIDWORKS_VERSION": "2026"
+      }
+    }
+  }
+}
+~~~
+
+3. **对话验证**：在 MCP 客户端输入"画一个 50mm 立方体"，确认 SolidWorks 中生成零件。
+
+> 详细工作流见下方"推荐工作流"章节。
 
 ## MCP 配置
 

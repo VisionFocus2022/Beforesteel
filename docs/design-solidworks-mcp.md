@@ -1,10 +1,12 @@
 # Design：SolidWorks MCP Server
 
-**版本**: 1.1（as-built 修订）
-**日期**: 2026-07-17（v1.0）｜ 2026-08-28（as-built 附录）
+**版本**: 1.2（as-built 修订 + 并发模型补章）
+**日期**: 2026-07-17（v1.0）｜ 2026-08-28（v1.1 as-built 附录）｜ 2026-10-01（v1.2 补 §2.4 时序 / §2.5 并发线程模型）
 **关联 PRD**: `docs/prd-solidworks-mcp.md`
 
 > ⚠️ **As-built 说明（2026-08-28）**：本文以下内容为 2026-07-17 的**原始设计**，保留作历史记录。与实现的主要偏差见文末「附录 A：As-built 对账」与 `docs/adr/2026-08-28-architecture-decisions.md`（决策记录）。
+>
+> 📌 **v1.2 补章说明（2026-10-01）**：§2.4「关键流程时序」与 §2.5「并发与线程模型」为 as-built 补章——承载 ADR-0001（STA 单线程）与 ADR-0006.1（COM 超时/毒化）已实现但原文档缺失的运行时行为，依据 `solidworks_mcp/utils/com_executor.py` 源码与 README/AGENTS.md 现行口径撰写。
 
 ---
 
@@ -62,6 +64,45 @@
 4. tool 调用 `solidworks_api/` 中的函数。
 5. `solidworks_api/` 通过 pywin32 调用 SolidWorks。
 6. 结果沿原路返回，Claude Code 汇总给用户。
+
+### 2.4 关键流程时序（v1.2 as-built 补章）
+
+**正常调用路径**：
+```
+Claude Code → server.py:        stdio JSON-RPC tools/call（如 solidworks_part_create_cylinder）
+server.py → registry/<域>.py:    路由到分域注册的工具函数（ADR-0012；入参 pydantic 校验，长度单位 mm）
+registry → com_executor:        run_com(fn, *args, timeout=120)——任务入队
+com-sta 线程:                    pythoncom.CoInitialize 公寓内 Dispatch/GetActiveObject 调 SW COM
+com_executor ← future.result(): COM 返回值/异常回传调用线程
+registry → Claude Code:         五段统一响应 {success, data, message, warning}
+```
+
+**超时与毒化路径**（ADR-0006.1，默认超时 120s，`SOLIDWORKS_MCP_COM_TIMEOUT_SECONDS` 可调）：
+```
+com-sta 线程:   卡在 SW 模态框/长运算上（COM 调用无法从外部安全中断）
+run_com:        future.result(timeout=120) 超时 → ComCallTimeoutError（错误码 SW_TIMEOUT）
+com_executor:   标记 poisoned——STA 线程与滞留任务保留，后续一切工具调用
+                入队前快速失败 ComExecutorPoisonedError（错误码 SW_EXECUTOR_POISONED）
+SOLIDWORKS_MCP_POISONED_EXIT=1 时：毒化即退出 server 进程 → MCP 客户端自动拉起新进程自愈
+```
+
+**进程关闭路径**：
+```
+atexit → com_executor.shutdown(): 投递 _STOP 哨兵，join(timeout=2s) 不无限阻塞
+```
+
+### 2.5 并发与线程模型（v1.2 as-built 补章）
+
+| 线程/执行面 | 职责 | 并发语义 |
+|------------|------|---------|
+| MCP SDK 调用线程（FastMCP 工具分发） | 接收 stdio JSON-RPC、参数校验、组装五段响应 | 可并发进入 |
+| `solidworks-com-sta`（唯一 COM STA daemon 线程） | `CoInitialize` 后循环消费任务队列，执行全部 SW COM 调用 | **全进程串行**——并发 MCP 调用在队列处排队 |
+| 非 COM 工作（环形阵列 layout 预览、schema 校验、capabilities 派生等） | 纯几何/纯数据计算 | 在调用线程执行，不占 COM 队列 |
+
+- **铁则**（AGENTS.md 安全红线 #1）：一切 SW COM 调用必须经 `run_com(...)` 收束到 STA 线程，禁止在其他线程直接触碰 COM 对象。测试 `test_calls_share_one_com_thread` 钉死（ADR-0001）。
+- **可重入短路**：若当前已在 COM 线程上（COM 回调内再调用），`call()` 直接同步执行不入队。
+- **毒化单向性**：超时不杀线程（COM 无法安全中断），poisoned 状态不可恢复，**进程重启是唯一解**；`SOLIDWORKS_MCP_POISONED_EXIT=1` 把"需人工重启"变成"退程+客户端自动重启"的自愈路径。
+- **设计演进注**：v1.0 §7 仅一句"工具调用串行化"；实际机制由 ADR-0001（STA 收束）与 ADR-0006.1（超时/毒化/退程）先后定型，本节为对账补章。
 
 ---
 
@@ -238,12 +279,14 @@ class CreateCylinderParams(BaseModel):
 
 - 工具调用默认超时 30 秒。
 - 文件导入/导出等可能耗时操作超时 120 秒。
-- 所有工具调用串行化，避免 SolidWorks COM API 并发问题。
+- 所有工具调用串行化，避免 SolidWorks COM API 并发问题（**机制详见 §2.5**；as-built 现行口径：默认超时 120s，`SOLIDWORKS_MCP_COM_TIMEOUT_SECONDS` 可调）。
 - 对频繁读取的模型属性做本地缓存（如特征列表）。
 
 ---
 
 ## 8. 文件变更清单
+
+> ⚠️ **过期标注（2026-10-01）**：下表为 v1.0 原始规划清单，仅作历史记录。实际落地以附录 A、ADR-0003（tools/ 分域未建→22 工具集中注册）、ADR-0012（server.py 收缩为门面 + `registry/` 10 文件分域注册）为准。
 
 | 文件/目录 | 类型 | 说明 |
 |----------|------|------|
@@ -283,7 +326,7 @@ class CreateCylinderParams(BaseModel):
 
 - [✅] 探索门禁已通过
 - [✅] PRD 门禁已通过
-- [ ] Design 门禁待确认
+- [x] Design 门禁——**事后追认（2026-10-01）**：v1.0 当时未走显式 AskUserQuestion 闭合，实现已按本文档完成且经架构审查（`docs/architecture-review-solidworksmcp.md`）与 594 项测试基线验证，此处补记追认而非伪造当时裁决；as-built 偏差见附录 A 与 ADR。
 
 ---
 
