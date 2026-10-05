@@ -187,6 +187,16 @@ class TestValidation(RebuildTestCase):
         self._assert_invalid({"version": 1, "units": "mm", "operations": []}, "operations")
         self._assert_invalid("not-a-dict", "dict")
 
+    def test_bad_version_message_names_accepted_versions(self):
+        """C-1 回归（2026-10-05）：错误消息必须动态列出合法版本，
+        指导用户修复——此前 f-string 嵌套引号 bug 把 join 当字面文本。"""
+        result = rebuild_csg_plan(
+            self.sw, {"version": 3, "units": "mm", "operations": []}
+        )
+        self.assertFalse(result["success"])
+        self.assertIn("expected one of 1, 2", result["message"])
+        self.assertNotIn("' or '.join", result["message"])
+
     def test_rejects_unknown_op_and_missing_fields(self):
         self._assert_invalid(
             {"version": 1, "units": "mm",

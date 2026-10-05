@@ -11,15 +11,15 @@ from __future__ import annotations
 import os
 from typing import List, Optional
 
-from solidworks_mcp.examples.ring_light import create_ring_light
-from solidworks_mcp.examples.ring_light_v3 import create_ring_light_v3
+from solidworks_mcp.products.ring_light import create_ring_light
+from solidworks_mcp.products.ring_light_v3 import create_ring_light_v3
 
 from .base import (
     STATE_CHANGE,
     PositiveMM,
     NonEmptyString,
     ToolResult,
-    _call_connected,
+    call_connected,
 )
 
 GATE_ENV = "SOLIDWORKS_MCP_PRODUCT_TOOLS"
@@ -42,7 +42,7 @@ def solidworks_part_create_ring_light(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Create a dome ring-light part (defaults to the confirmed 9-row layout) and save it as .sldprt."""
-    return _call_connected(
+    return call_connected(
         lambda sw: create_ring_light(
             sw,
             save_path=save_path,
@@ -67,7 +67,7 @@ def solidworks_part_create_ring_light_v3(
     launch_if_needed: Optional[bool] = None,
 ) -> ToolResult:
     """Preserve a STEP-derived housing and replace its front annulus with a concave dish (defaults to the confirmed 9-row layout)."""
-    return _call_connected(
+    return call_connected(
         lambda sw: create_ring_light_v3(
             sw,
             source_path=source_path,

@@ -37,6 +37,18 @@ class TestDesignPlan(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertEqual(result["error"]["code"], "INVALID_PARAMETER")
 
+    def test_none_vs_empty_operations_have_accurate_messages(self):
+        """C-5 回归（2026-10-05）：None 报类型错误（不再是"至少一个操作"），
+        空列表才报"至少一个操作"，消息各自准确。"""
+        none_result = execute_design_plan(FakeSolidWorks(), None)
+        self.assertFalse(none_result["success"])
+        self.assertEqual(none_result["error"]["code"], "INVALID_PARAMETER")
+        self.assertIn("must be a list", none_result["message"])
+
+        empty_result = execute_design_plan(FakeSolidWorks(), [])
+        self.assertFalse(empty_result["success"])
+        self.assertIn("at least one", empty_result["message"])
+
     @patch("solidworks_mcp.solidworks_api.design.cut_round_hole")
     def test_false_string_is_not_treated_as_true(self, cut_round_hole):
         cut_round_hole.return_value = success_response({}, "done")

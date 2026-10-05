@@ -4,6 +4,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 # Ensure the project package is importable
@@ -42,6 +43,17 @@ class TestCommonResponse(unittest.TestCase):
 class TestSecurity(unittest.TestCase):
     def test_normalize_path_resolves_relative(self):
         self.assertTrue(os.path.isabs(normalize_path("some/relative/path")))
+
+    def test_default_allowed_root_reads_env_at_call_time(self):
+        """P-2 回归（2026-10-05）：allowed_root 惰性求值——import 后设置
+        SOLIDWORKS_MCP_ALLOWED_ROOT 必须生效（此前 import 期冻结被静默忽略）。"""
+        from solidworks_mcp.utils.security import default_allowed_root
+
+        fake_root = os.path.abspath(os.sep + "swmcp" + os.sep + "lazy-root")
+        with patch.dict(
+            os.environ, {"SOLIDWORKS_MCP_ALLOWED_ROOT": fake_root}
+        ):
+            self.assertEqual(default_allowed_root(), os.path.normpath(fake_root))
 
     def test_is_path_allowed_within_root(self):
         self.assertTrue(

@@ -123,7 +123,16 @@ def open_document(
         target_type = doc_type if doc_type is not None else _guess_document_type(file_path)
         model, error_code, warning_code = _open_doc6(sw_app.app, file_path, target_type)
         if model is None:
-            detail = _format_load_error(error_code)
+            # C-3（2026-10-05）：动态派发路径拿不到真实错误码（返回非
+            # tuple 时 _open_doc6 记 0）——如实说明，不要伪装成 "code 0"。
+            if error_code:
+                detail = _format_load_error(error_code)
+            else:
+                detail = (
+                    "SolidWorks returned no document and no error code "
+                    "(dynamic dispatch) — check the file format, import "
+                    "settings, and that the file is not corrupt"
+                )
             return error_response(f"Failed to open document: {file_path}. {detail}")
 
         return success_response(

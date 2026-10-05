@@ -304,7 +304,10 @@ def add_mate(
                     code="INVALID_PARAMETER",
                 )
             distance = finite_number("distance", distance)
-            if distance < 0:
+            # C-4（2026-10-05）：distance mate 的偏移必须非负；angle mate
+            # 的 distance 参数承载角度（度，SignedMM 语义）——负角合法，
+            # 仅要求 finite（finite_number 已保证），不得误拒。
+            if mate_type_val == swMateDISTANCE and distance < 0:
                 return error_response(
                     "distance must be zero or greater",
                     code="INVALID_PARAMETER",
@@ -559,6 +562,37 @@ def _walk_feature_names(model: Any, max_nodes: int = MAX_TREE_WALK) -> set:
     return names
 
 
+def _feature_name_exists(model: Any, name: str, max_nodes: int = MAX_TREE_WALK) -> bool:
+    """Early-exit membership probe (P-1, 2026-10-05).
+
+    Semantics identical to ``name in _walk_feature_names(model)`` but
+    stops at the first hit instead of collecting the whole tree —
+    delete_mate's post-delete recheck previously paid a full O(N×M) walk
+    even when the mate was gone (the overwhelmingly common case).
+    """
+    feat = call_or_value(model, "FirstFeature")
+    steps = 0
+    while feat is not None and steps < max_nodes:
+        feat_name = call_or_value(feat, "Name")
+        if not isinstance(feat_name, str):
+            break
+        if feat_name == name:
+            return True
+        sub = call_or_value(feat, "GetFirstSubFeature")
+        sub_steps = 0
+        while sub is not None and sub_steps < max_nodes:
+            sub_name = call_or_value(sub, "Name")
+            if not isinstance(sub_name, str):
+                break
+            if sub_name == name:
+                return True
+            sub = call_or_value(sub, "GetNextSubFeature")
+            sub_steps += 1
+        feat = call_or_value(feat, "GetNextFeature")
+        steps += 1
+    return False
+
+
 def delete_mate(sw_app: SolidWorksApp, mate_name: str) -> dict:
     """Delete one mate from the active assembly (destructive).
 
@@ -593,7 +627,10 @@ def delete_mate(sw_app: SolidWorksApp, mate_name: str) -> dict:
 
         call_or_value(model, "EditDelete")
 
-        if mate_name in _walk_feature_names(model):
+        # P-1（2026-10-05）：删后复检改早停探针——常见情形（已删掉）在
+        # 命中前即返回，不再全树收集；语义与原 `_walk_feature_names`
+        # 成员检查一致（含一级子特征，MATE 在 MateGroup 内）。
+        if _feature_name_exists(model, mate_name):
             return error_response(
                 f"SolidWorks rejected deleting '{mate_name}' "
                 f"(still in tree after EditDelete)",

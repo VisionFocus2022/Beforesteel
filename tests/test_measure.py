@@ -66,6 +66,24 @@ class TestBoundingBox(unittest.TestCase):
         sw.get_active_document.return_value = Model(())
         self.assertFalse(get_bounding_box(sw)["success"])
 
+    def test_degenerate_body_is_skipped_not_fatal(self):
+        """C-7 回归（2026-10-05）：GetBodyBox 返回 None 的退化体跳过，
+        不再让整包测量报错；全部退化时如实报 SW_API_ERROR。"""
+        good = Body((0.0, 0.0, 0.0, 0.06, 0.01, 0.02))
+        bad = Body(None)
+        model = Model((good, bad))
+        sw = Mock()
+        sw.get_active_document.return_value = model
+        result = get_bounding_box(sw)
+        self.assertTrue(result["success"], result)
+        self.assertEqual(result["data"]["body_count"], 1)
+
+        sw2 = Mock()
+        sw2.get_active_document.return_value = Model((Body(None),))
+        all_bad = get_bounding_box(sw2)
+        self.assertFalse(all_bad["success"])
+        self.assertEqual(all_bad["error"]["code"], "SW_API_ERROR")
+
     def test_com_error_is_tool_error(self):
         sw = Mock()
         sw.get_active_document.side_effect = RuntimeError("COM failed")

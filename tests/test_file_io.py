@@ -125,6 +125,29 @@ class TestOpenDocument(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertIn("3DInterconnect", result["message"])
 
+    @patch("solidworks_mcp.solidworks_api.file_io.validate_path", return_value=(True, ""))
+    @patch("solidworks_mcp.solidworks_api.file_io._make_error_variants")
+    def test_open_failure_without_error_code_is_honest(self, variants, _validate):
+        """C-3 回归（2026-10-05）：动态派发返回非 tuple（拿不到错误码）
+        时不得伪装 "load error code 0"——如实说明并给出排查方向。"""
+
+        def dynamic_dispatch_open_doc6(*args):
+            # 首 VARIANT 调用抛 TypeError（makepy 形态）；重试路径返回
+            # 裸 None（dynamic dispatch 不打包 byref out-params）。
+            if not all(isinstance(arg, int) for arg in args[4:6]):
+                raise TypeError("int() argument must be a real number, not 'VARIANT'")
+            return None
+
+        variants.return_value = (SimpleNamespace(value=0), SimpleNamespace(value=0))
+        sw = Mock()
+        sw.app.OpenDoc6.side_effect = dynamic_dispatch_open_doc6
+
+        result = open_document(sw, r"C:\models\part.sldprt")
+
+        self.assertFalse(result["success"])
+        self.assertIn("no document and no error code", result["message"])
+        self.assertNotIn("load error code 0", result["message"])
+
 
 class TestCloseDocument(unittest.TestCase):
     def test_close_without_save_skips_save_and_reports_title(self):

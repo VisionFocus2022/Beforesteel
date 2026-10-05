@@ -228,7 +228,9 @@ def create_loft(
                 if model.FeatureManager.InsertRefPlane(
                     8, mm_to_m(section_spacing_mm * index), 0, 0, 0, 0
                 ) is None:
-                    return error_response("Offset reference plane rejected")
+                    return error_response(
+                        "Offset reference plane rejected", code="SW_API_ERROR"
+                    )
                 plane_name = latest_feature_name(model)
             model.ClearSelection2(True)
             if not model.Extension.SelectByID2(
@@ -257,7 +259,9 @@ def create_loft(
         _typed_doc2(model).InsertProtrusionBlend2(False, False, False)
         after = latest_feature_name(model)
         if after == before:
-            return error_response("Loft feature creation rejected")
+            return error_response(
+                "Loft feature creation rejected", code="SW_API_ERROR"
+            )
 
         result = {"feature_name": after}
         code, message = persist_part_save(model, save_path, result)

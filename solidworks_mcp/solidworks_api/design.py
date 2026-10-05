@@ -240,7 +240,14 @@ def cut_round_hole(
         if not selected:
             return error_response(f"Could not select hole sketch: {sketch_name}")
 
-        cut_depth = mm_to_m(diameter if depth is None else depth)
+        # C-9（2026-10-05）：through_all 时 cut_depth 仅是占位值——实际行为
+        # 由 end_condition=1（swEndCondThroughAll）决定，diameter 分支只是
+        # "无深度可传"时的填充，语义上与直径无关（此前一行表达式易误读）。
+        if through_all or depth is None:
+            placeholder_depth = diameter  # ignored when end_condition=1
+        else:
+            placeholder_depth = depth
+        cut_depth = mm_to_m(placeholder_depth)
         end_condition = 1 if through_all else 0
         feature = cut_feature(model, True, through_all, end_condition, cut_depth)
         if feature is None:
@@ -509,13 +516,19 @@ def execute_design_plan(
     so retrying a plan never stacks half-applied features. Rollback failures
     never mask the original error — they surface as ``rollback_warning``.
     """
+    # C-5（2026-10-05）：先类型后空检查——None 报类型错误（不是"空列表"），
+    # 传字符串等其他容器报 list 错误，消息各自准确。
+    if not isinstance(operations, list):
+        return error_response(
+            f"operations must be a list, got "
+            f"{type(operations).__name__ or 'None'}",
+            code="INVALID_PARAMETER",
+        )
     if not operations:
         return error_response(
             "operations must contain at least one operation",
             code="INVALID_PARAMETER",
         )
-    if not isinstance(operations, list):
-        return error_response("operations must be a list", code="INVALID_PARAMETER")
     if save_path:
         valid, message = validate_output_file(
             save_path, {".sldprt"}, overwrite_confirm
@@ -802,7 +815,7 @@ def _validate_csg_plan(plan: Any) -> Optional[str]:
     version = plan.get("version")
     if version not in CSG_VERSIONS:
         return (f"unsupported plan version {version!r} "
-                f"(expected ' or '.join(str(v) for v in CSG_VERSIONS))")
+                f"(expected one of {', '.join(str(v) for v in CSG_VERSIONS)})")
     if plan.get("units") != "mm":
         return "units must be 'mm'"
     ops = plan.get("operations")

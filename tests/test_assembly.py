@@ -106,5 +106,38 @@ class TestAssemblyMate(unittest.TestCase):
         self.assertEqual(result["error"]["code"], "INVALID_PARAMETER")
 
 
+class TestMateDistanceValidation(unittest.TestCase):
+    """C-4 回归（2026-10-05）：angle mate 的 distance 参数承载角度
+    （度，SignedMM 语义允许负角），不得被 distance mate 的非负校验误拒。"""
+
+    def test_negative_angle_mate_is_accepted(self):
+        sw = FakeSolidWorks()
+        result = add_mate(
+            sw,
+            "angle",
+            "Front Plane@Component1",
+            "Front Plane@Component2",
+            distance=-15.0,
+            entity1_type="PLANE",
+            entity2_type="PLANE",
+        )
+        self.assertTrue(result["success"], result)
+
+    def test_negative_distance_mate_is_still_rejected(self):
+        sw = FakeSolidWorks()
+        result = add_mate(
+            sw,
+            "distance",
+            "Front Plane@Component1",
+            "Front Plane@Component2",
+            distance=-5.0,
+            entity1_type="PLANE",
+            entity2_type="PLANE",
+        )
+        self.assertFalse(result["success"])
+        self.assertEqual(result["error"]["code"], "INVALID_PARAMETER")
+        self.assertIn("zero or greater", result["message"])
+
+
 if __name__ == "__main__":
     unittest.main()
