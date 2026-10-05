@@ -16,7 +16,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from solidworks_mcp.examples import ring_light, ring_light_v3
+from solidworks_mcp.products import ring_light, ring_light_v3
 from solidworks_mcp.solidworks_api.design import _save_active_model
 from solidworks_mcp.utils.security import (
     _expand_long_path,
@@ -175,11 +175,11 @@ class TestSessionFilter(unittest.TestCase):
 
 class TestDerivedFileConfirmation(unittest.TestCase):
     @patch(
-        "solidworks_mcp.examples.ring_light.check_overwrite_confirm",
+        "solidworks_mcp.products.ring_light.check_overwrite_confirm",
         return_value=(False, "File already exists"),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light.validate_output_file",
+        "solidworks_mcp.products.ring_light.validate_output_file",
         return_value=(True, ""),
     )
     def test_ring_light_rejects_existing_derived_artifacts(self, _validate, _confirm):
@@ -189,15 +189,15 @@ class TestDerivedFileConfirmation(unittest.TestCase):
         self.assertEqual(result["error"]["code"], "INVALID_OUTPUT_PATH")
 
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.check_overwrite_confirm",
+        "solidworks_mcp.products.ring_light_v3.check_overwrite_confirm",
         return_value=(False, "File already exists"),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.validate_output_file",
+        "solidworks_mcp.products.ring_light_v3.validate_output_file",
         return_value=(True, ""),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.validate_path",
+        "solidworks_mcp.products.ring_light_v3.validate_path",
         return_value=(True, ""),
     )
     def test_v3_rejects_existing_layout_json(self, _path, _output, _confirm):

@@ -37,7 +37,36 @@ PM_OFFSETS = {
     "cancel": (42, 265),
     "equal_spacing": (43, 378),
     "instance_count": (120, 440),
+    "axis_box": (120, 327),
+    "feature_tree_icon": (22, 208),
+    "features_faces_box": (130, 538),
 }
+
+# N58 PM 面板驱动计划（R2, 2026-10-05）：序列抽为数据结构，
+# 单元测试锁其完整性与顺序；分辨率/布局变化时只改这一处。
+#   action: "click"（点击 offset）| "tree_select"（特征树选 target）
+#           | "type_instances"（点击 offset 后 ^a 全选→输入实例数→TAB）
+#   when:   仅条件步携带；"equal_spacing" 表示 equal_spacing=True 才执行。
+# 前置不变：菜单路径（插入→阵列/镜向→圆周阵列）在计划之前由
+# send_keys/_click_menu_item 完成，不属于本计划。
+PANE_CLICK_PLAN: tuple = (
+    {"step": 1, "action": "click", "offset": PM_OFFSETS["axis_box"],
+     "purpose": "focus_axis_box"},
+    {"step": 2, "action": "click", "offset": PM_OFFSETS["feature_tree_icon"],
+     "purpose": "open_feature_tree"},
+    {"step": 3, "action": "tree_select", "target": "axis_feature",
+     "purpose": "pick_axis"},
+    {"step": 4, "action": "click", "offset": PM_OFFSETS["features_faces_box"],
+     "purpose": "focus_features_box"},
+    {"step": 5, "action": "tree_select", "target": "seed_feature",
+     "purpose": "pick_seed"},
+    {"step": 6, "action": "click", "offset": PM_OFFSETS["equal_spacing"],
+     "purpose": "toggle_equal_spacing", "when": "equal_spacing"},
+    {"step": 7, "action": "type_instances", "offset": PM_OFFSETS["instance_count"],
+     "purpose": "set_instance_count"},
+    {"step": 8, "action": "click", "offset": PM_OFFSETS["ok"],
+     "purpose": "commit_ok"},
+)
 
 
 def _selection_nothing() -> Any:
@@ -165,21 +194,25 @@ def drive_pattern_pane(
                 return
         raise RuntimeError(f"特征树中未找到 {name!r}")
 
-    # 预选择不自动流入 PM 框（实测）——点框→点树逐项填充
-    _click((120, 327))                      # 1. 阵列轴框
-    _click((22, 208))                       # 2. FeatureManager 树图标
-    _tree_click(axis_feature)               # 3. 树选轴
-    _click((130, 538))                      # 4. 特征和面框
-    _tree_click(seed_feature)               # 5. 树选种子
-    if equal_spacing:
-        _click((43, 378))                   # 6a. 等间距
-    _click((120, 440))                      # 6b. 实例数框
-    send_keys("^a")
-    send_keys(str(instance_count))
-    time.sleep(0.3)
-    send_keys("{TAB}")
-    time.sleep(0.6)
-    _click((17, 265))                       # OK 勾
+    # 预选择不自动流入 PM 框（实测）——按 PANE_CLICK_PLAN 计划驱动：
+    # 点轴框→开树→选轴→点特征框→选种子→(等间距)→实例数→OK
+    targets = {"axis_feature": axis_feature, "seed_feature": seed_feature}
+    for item in PANE_CLICK_PLAN:
+        when = item.get("when")
+        if when == "equal_spacing" and not equal_spacing:
+            continue
+        action = item["action"]
+        if action == "tree_select":
+            _tree_click(targets[item["target"]])
+        elif action == "type_instances":
+            _click(item["offset"])
+            send_keys("^a")
+            send_keys(str(instance_count))
+            time.sleep(0.3)
+            send_keys("{TAB}")
+            time.sleep(0.6)
+        else:  # "click"
+            _click(item["offset"])
     time.sleep(3.0)  # 等待重建
 
 

@@ -11,8 +11,8 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from solidworks_mcp.examples import ring_light_v3
-from solidworks_mcp.examples.ring_light_v3 import (
+from solidworks_mcp.products import ring_light_v3
+from solidworks_mcp.products.ring_light_v3 import (
     build_concave_dish_bands,
     build_ring_light_v3_layout,
     _band_crosses_mount_zone,
@@ -180,19 +180,19 @@ class FakeV3Model:
 
 class TestCreateRingLightV3EndToEnd(unittest.TestCase):
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.check_overwrite_confirm",
+        "solidworks_mcp.products.ring_light_v3.check_overwrite_confirm",
         return_value=(True, ""),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.ensure_sink_path",
+        "solidworks_mcp.products.ring_light_v3.ensure_sink_path",
         side_effect=lambda path, allowed_root=None: (True, "", path),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.validate_output_file",
+        "solidworks_mcp.products.ring_light_v3.validate_output_file",
         return_value=(True, ""),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.validate_path",
+        "solidworks_mcp.products.ring_light_v3.validate_path",
         return_value=(True, ""),
     )
     def test_full_build_reports_quadrant_bands_and_layout(
@@ -214,19 +214,19 @@ class TestCreateRingLightV3EndToEnd(unittest.TestCase):
             self.assertTrue(os.path.isfile(os.path.join(tmp, "v3.layout.json")))
 
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.check_overwrite_confirm",
+        "solidworks_mcp.products.ring_light_v3.check_overwrite_confirm",
         return_value=(True, ""),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.ensure_sink_path",
+        "solidworks_mcp.products.ring_light_v3.ensure_sink_path",
         side_effect=lambda path, allowed_root=None: (True, "", path),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.validate_output_file",
+        "solidworks_mcp.products.ring_light_v3.validate_output_file",
         return_value=(True, ""),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.validate_path",
+        "solidworks_mcp.products.ring_light_v3.validate_path",
         return_value=(True, ""),
     )
     def test_unselectable_front_face_fails_gracefully(
@@ -243,19 +243,19 @@ class TestCreateRingLightV3EndToEnd(unittest.TestCase):
         self.assertEqual(result["error"]["code"], "SW_API_ERROR")
 
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.check_overwrite_confirm",
+        "solidworks_mcp.products.ring_light_v3.check_overwrite_confirm",
         return_value=(True, ""),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.ensure_sink_path",
+        "solidworks_mcp.products.ring_light_v3.ensure_sink_path",
         side_effect=lambda path, allowed_root=None: (True, "", path),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.validate_output_file",
+        "solidworks_mcp.products.ring_light_v3.validate_output_file",
         return_value=(True, ""),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.validate_path",
+        "solidworks_mcp.products.ring_light_v3.validate_path",
         return_value=(True, ""),
     )
     def test_unopenable_source_reports_import_failure(
@@ -271,19 +271,19 @@ class TestCreateRingLightV3EndToEnd(unittest.TestCase):
         self.assertEqual(result["error"]["code"], "SW_IMPORT_FAILED")
 
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.check_overwrite_confirm",
+        "solidworks_mcp.products.ring_light_v3.check_overwrite_confirm",
         return_value=(True, ""),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.ensure_sink_path",
+        "solidworks_mcp.products.ring_light_v3.ensure_sink_path",
         side_effect=lambda path, allowed_root=None: (True, "", path),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.validate_output_file",
+        "solidworks_mcp.products.ring_light_v3.validate_output_file",
         return_value=(True, ""),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light_v3.validate_path",
+        "solidworks_mcp.products.ring_light_v3.validate_path",
         return_value=(True, ""),
     )
     def test_step_source_falls_back_to_loadfile4(self, _path, _output, _sink, _confirm):

@@ -11,7 +11,8 @@ authors = [
 dependencies = [
     "pywin32>=306",
     "mcp[cli]>=1.28.1,<1.29.0",
-    "pydantic>=2.12.0,<3.0.0"
+    "pydantic>=2.12.0,<3.0.0",
+    "pywinauto>=0.6.8 ; sys_platform == 'win32'"
 ]
 
 [project.optional-dependencies]
@@ -34,6 +35,10 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+addopts = "-ra --strict-markers"
+markers = [
+    "real_sw: requires a running, visible SolidWorks 2026 instance (skipped in CI; run with -m real_sw and SOLIDWORKS_MCP_E2E=1)",
+]
 
 [tool.coverage.run]
 branch = true

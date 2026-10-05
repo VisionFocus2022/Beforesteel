@@ -526,6 +526,20 @@ class TestExport(DrawingTestCase):
         self.assertFalse(result["success"])
         self.assertIn("COM failed", result["message"])
 
+    def test_export_success_without_file_is_honest(self):
+        """T4 残余（2026-10-05）：SaveAs3 返回 0 但盘上无文件——SW 静默
+        失败的已知形态，必须如实报错而非假装成功。"""
+        doc = FakeDrawingDoc()
+        doc.SaveAs3 = lambda *a: 0  # 声称成功但不写盘
+        sw, _ = self._sw(doc=doc)
+        _, vo, ve = self._patch_checks()
+        with vo, ve:
+            result = drawing.export_drawing_pdf(
+                sw, str(self.tmp / "ghost.pdf")
+            )
+        self.assertFalse(result["success"])
+        self.assertIn("no file was written", result["message"])
+
 
 class TestNotRunningPaths(unittest.TestCase):
     def test_all_tools_report_not_running(self):
@@ -1234,3 +1248,37 @@ class TestInsertGtol(DrawingTestCase):
             result = drawing.insert_gtol(sw, "flatness", 0.05, 0.0, 0.0)
         self.assertTrue(result["success"], result)
         self.assertEqual(result["data"]["frames"], 1)
+
+    def test_gtol_non_numeric_inputs_rejected(self):
+        """R4（2026-10-05）：tolerance/x/y 非数值 → INVALID_PARAMETER。"""
+        sw, _ = self._sw(doc=self._doc(FakeGtol()))
+        result = drawing.insert_gtol(sw, "flatness", "thick", 0.0, 0.0)
+        self.assertFalse(result["success"])
+        self.assertEqual(result["error"]["code"], "INVALID_PARAMETER")
+
+    def test_gtol_sheet_coord_overflow_rejected(self):
+        """R4：x/y 超出可打印幅面 → INVALID_PARAMETER（防误置框外）。"""
+        sw, _ = self._sw(doc=self._doc(FakeGtol()))
+        result = drawing.insert_gtol(sw, "flatness", 0.05, 1e9, 0.0)
+        self.assertFalse(result["success"])
+        self.assertEqual(result["error"]["code"], "INVALID_PARAMETER")
+
+    def test_gtol_no_active_document(self):
+        """R4：无活动文档 → 结构化错误（不裸崩）。"""
+        idle = Mock()
+        idle.get_active_document.return_value = None
+        result = drawing.insert_gtol(idle, "flatness", 0.05, 0.0, 0.0)
+        self.assertFalse(result["success"])
+
+    def test_gtol_unexpected_exception_is_structured(self):
+        """R4：NewGtol 抛非 COM 异常 → 兜底 except 结构化返回。"""
+        doc = FakeDrawingDoc()
+        doc.NewGtol = Mock(side_effect=RuntimeError("ui exploded"))
+        sw, _ = self._sw(doc=doc)
+        with patch(
+            "win32com.client.gencache.GetModuleForProgID",
+            side_effect=RuntimeError("gencache unavailable"),
+        ):
+            result = drawing.insert_gtol(sw, "flatness", 0.05, 0.0, 0.0)
+        self.assertFalse(result["success"])
+        self.assertIn("Failed to insert GD&T frame", result["message"])

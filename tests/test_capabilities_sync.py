@@ -37,6 +37,7 @@ class TestCapabilitiesSync(unittest.TestCase):
                 "Complex surfaces, GD&T feature-control frames, simulation, and PDM are not yet exposed.",
                 "Drawing BOM balloons (AutoBalloon family) are blocked by the SolidWorks API on this machine; use drawing_insert_bom_table instead.",
                 "Exploded-state drawing projection is an open observation item; project from the saved model configuration.",
+                "solidworks_part_circular_pattern drives the PropertyManager pane via UI automation: it needs a visible, maximized SolidWorks window with the standard toolbar layout on a 1920x1040 desktop (N58; pixel-calibrated offsets).",
             ],
         )
 

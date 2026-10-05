@@ -15,6 +15,7 @@ from solidworks_mcp.solidworks_api.pattern import (
     create_annular_pattern,
 )
 from solidworks_mcp.server import mcp
+from solidworks_mcp.registry import part as reg_part
 
 
 class TestAnnularRingSchema(unittest.TestCase):
@@ -382,9 +383,7 @@ class TestPatternRegistration(unittest.TestCase):
         )
 
     def test_layout_tool_computes_without_solidworks(self):
-        from solidworks_mcp import server
-
-        result = server.solidworks_pattern_annular_layout(
+        result = reg_part.solidworks_pattern_annular_layout(
             rings=[AnnularRing(radius_mm=10, count=4, diameter_mm=3)]
         )
 

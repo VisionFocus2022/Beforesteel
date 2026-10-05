@@ -10,6 +10,14 @@ import unittest
 from unittest.mock import patch
 
 from solidworks_mcp import server
+from solidworks_mcp.registry import (
+    assembly as reg_assembly,
+    features as reg_features,
+    file_io as reg_file_io,
+    misc as reg_misc,
+    part as reg_part,
+    products as reg_products,
+)
 from solidworks_mcp.solidworks_api.app import _is_solidworks_process_running
 from solidworks_mcp.utils.com import call_or_value
 from solidworks_mcp.utils.com_executor import _executor, run_com
@@ -18,6 +26,8 @@ from solidworks_mcp.utils.templates import (
     get_drawing_template,
     get_part_template,
 )
+
+from tests import _counts
 
 
 class TestProcessDetection(unittest.TestCase):
@@ -72,59 +82,59 @@ class TestServerToolWrappers(unittest.TestCase):
 
     def test_every_tool_returns_structured_response(self):
         calls = [
-            (server.solidworks_get_active_document, {}),
-            (server.solidworks_part_new, {}),
+            (reg_misc.solidworks_get_active_document, {}),
+            (reg_part.solidworks_part_new, {}),
             (
-                server.solidworks_part_create_plate,
+                reg_part.solidworks_part_create_plate,
                 {"width": 1, "depth": 1, "thickness": 1},
             ),
             (
-                server.solidworks_part_create_box,
+                reg_part.solidworks_part_create_box,
                 {"width": 1, "depth": 1, "height": 1},
             ),
             (
-                server.solidworks_part_create_cylinder,
+                reg_part.solidworks_part_create_cylinder,
                 {"diameter": 1, "height": 1},
             ),
-            (server.solidworks_part_cut_round_hole, {"diameter": 1}),
+            (reg_part.solidworks_part_cut_round_hole, {"diameter": 1}),
             (
-                server.solidworks_part_create_annular_pattern,
+                reg_part.solidworks_part_create_annular_pattern,
                 {"rings": [{"radius_mm": 10, "count": 4, "diameter_mm": 3}]},
             ),
             (
-                server.solidworks_part_create_ring_light,
+                reg_products.solidworks_part_create_ring_light,
                 {"save_path": "ring.sldprt"},
             ),
             (
-                server.solidworks_part_create_ring_light_v3,
+                reg_products.solidworks_part_create_ring_light_v3,
                 {"source_path": "src.step", "save_path": "ring.sldprt"},
             ),
             (
-                server.solidworks_design_execute_plan,
+                reg_part.solidworks_design_execute_plan,
                 {"operations": [{"type": "new_part"}]},
             ),
-            (server.solidworks_part_get_mass_properties, {}),
-            (server.solidworks_file_open, {"file_path": "part.sldprt"}),
-            (server.solidworks_file_close, {}),
-            (server.solidworks_file_import_step, {"file_path": "part.step"}),
-            (server.solidworks_file_export_step, {"file_path": "part.step"}),
-            (server.solidworks_file_export_stl, {"file_path": "part.stl"}),
-            (server.solidworks_features_list, {}),
+            (reg_part.solidworks_part_get_mass_properties, {}),
+            (reg_file_io.solidworks_file_open, {"file_path": "part.sldprt"}),
+            (reg_file_io.solidworks_file_close, {}),
+            (reg_file_io.solidworks_file_import_step, {"file_path": "part.step"}),
+            (reg_file_io.solidworks_file_export_step, {"file_path": "part.step"}),
+            (reg_file_io.solidworks_file_export_stl, {"file_path": "part.stl"}),
+            (reg_features.solidworks_features_list, {}),
             (
-                server.solidworks_feature_rename,
+                reg_features.solidworks_feature_rename,
                 {"old_name": "A", "new_name": "B"},
             ),
             (
-                server.solidworks_feature_set_suppression,
+                reg_features.solidworks_feature_set_suppression,
                 {"feature_name": "A", "suppressed": True},
             ),
             (
-                server.solidworks_assembly_add_component,
+                reg_assembly.solidworks_assembly_add_component,
                 {"file_path": "part.sldprt"},
             ),
-            (server.solidworks_assembly_list_components, {}),
+            (reg_assembly.solidworks_assembly_list_components, {}),
             (
-                server.solidworks_assembly_add_mate,
+                reg_assembly.solidworks_assembly_add_mate,
                 {"mate_type": "coincident", "entity1": "A", "entity2": "B"},
             ),
         ]
@@ -145,7 +155,7 @@ class TestServerToolWrappers(unittest.TestCase):
             for domain in (misc, part, features, file_io, assembly, products):
                 stack.enter_context(
                     patch.object(
-                        domain, "_call_connected", return_value=dict(self.SENTINEL)
+                        domain, "call_connected", return_value=dict(self.SENTINEL)
                     )
                 )
             for fn, kwargs in calls:
@@ -156,28 +166,28 @@ class TestServerToolWrappers(unittest.TestCase):
         from solidworks_mcp.registry import base
 
         with patch.object(base, "run_com", side_effect=RuntimeError("boom")):
-            result = server.solidworks_connect(launch_if_needed=False)
+            result = reg_misc.solidworks_connect(launch_if_needed=False)
         self.assertFalse(result["success"])
         self.assertEqual(result["error"]["code"], "SW_API_ERROR")
 
     def test_design_capabilities_responds_directly(self):
-        result = server.solidworks_design_capabilities()
+        result = reg_misc.solidworks_design_capabilities()
 
         self.assertTrue(result["success"])
-        self.assertEqual(len(result["data"]["tools"]), 81)
+        self.assertEqual(len(result["data"]["tools"]), _counts.DEFAULT_TOOLS)
 
     def test_resources_return_json_payloads(self):
         status = json.loads(server.solidworks_status_resource())
         self.assertIn("connected", status)
 
         with patch.object(
-            server, "_call_connected", return_value=dict(self.SENTINEL)
+            server, "call_connected", return_value=dict(self.SENTINEL)
         ):
             active = json.loads(server.solidworks_active_document_resource())
         self.assertTrue(active["success"])
 
         capabilities = json.loads(server.solidworks_capabilities_resource())
-        self.assertEqual(len(capabilities["tools"]), 81)
+        self.assertEqual(len(capabilities["tools"]), _counts.DEFAULT_TOOLS)
 
 
 class TestComTimeout(unittest.TestCase):
@@ -199,18 +209,73 @@ class TestComTimeout(unittest.TestCase):
             release.set()
             executor.shutdown()
 
+    def test_poisoned_executor_recovers_when_stuck_call_returns(self):
+        """C-2 回归（2026-10-05）：滞留调用最终返回（worker 存活且队列
+        清空）时，下一次 call 自动解除毒化恢复服务——而非永久失败。"""
+        import time
+
+        from solidworks_mcp.utils.com_executor import (
+            ComCallTimeoutError,
+            ComExecutor,
+            ComExecutorPoisonedError,
+        )
+
+        release = threading.Event()
+        executor = ComExecutor()
+        try:
+            with self.assertRaises(ComCallTimeoutError):
+                executor.call(release.wait, timeout=0.1)
+            self.assertTrue(executor.is_poisoned())
+            # 滞留调用此刻仍未返回：立即调用仍应快速失败（不自愈）。
+            with self.assertRaises(ComExecutorPoisonedError):
+                executor.call(lambda: "still-stuck")
+            # 滞留调用返回 → future done → 下一次 call 自动恢复。
+            # （恢复探测在 call() 入队前触发；is_poisoned() 是被动快照，
+            # 滞留 future 完成后下一次调用即解除毒化。）
+            release.set()
+            time.sleep(0.3)  # 等 worker 完成滞留调用
+            self.assertEqual(
+                executor.call(lambda: "recovered", timeout=5.0), "recovered"
+            )
+            self.assertFalse(executor.is_poisoned())
+        finally:
+            release.set()
+            executor.shutdown()
+
+    def test_status_resource_exposes_poisoned_flag(self):
+        """C-2：solidworks://status 暴露 poisoned 字段（宿主可据此重启）。"""
+        status = json.loads(server.solidworks_status_resource())
+        self.assertIn("poisoned", status)
+        self.assertIsInstance(status["poisoned"], bool)
+
+    def test_executor_restarts_worker_after_shutdown(self):
+        """T7（2026-10-05）：shutdown 排干后再次 call——_ensure_started 双检锁
+        必须拉起新 STA 线程继续服务（进程内自愈重启路径）。"""
+        from solidworks_mcp.utils.com_executor import ComExecutor
+
+        executor = ComExecutor()
+        try:
+            first = executor.call(threading.get_ident, timeout=5.0)
+            executor.shutdown()
+            self.assertTrue(executor._thread is None or not executor._thread.is_alive())
+            second = executor.call(threading.get_ident, timeout=5.0)
+            self.assertNotEqual(first, second, "expected a fresh STA thread")
+            self.assertNotEqual(second, threading.get_ident())
+        finally:
+            executor.shutdown()
+
     def test_com_timeout_env_is_parsed_and_enabled_by_default(self):
-        self.assertEqual(server._com_timeout(), 120.0)
+        self.assertEqual(server.com_timeout(), 120.0)
         with patch.dict(
             os.environ, {"SOLIDWORKS_MCP_COM_TIMEOUT_SECONDS": "12.5"}
         ):
-            self.assertEqual(server._com_timeout(), 12.5)
+            self.assertEqual(server.com_timeout(), 12.5)
         with patch.dict(os.environ, {"SOLIDWORKS_MCP_COM_TIMEOUT_SECONDS": "0"}):
-            self.assertEqual(server._com_timeout(), 120.0)
+            self.assertEqual(server.com_timeout(), 120.0)
         with patch.dict(
             os.environ, {"SOLIDWORKS_MCP_COM_TIMEOUT_SECONDS": "junk"}
         ):
-            self.assertEqual(server._com_timeout(), 120.0)
+            self.assertEqual(server.com_timeout(), 120.0)
 
     def test_connect_maps_timeout_to_dedicated_error_code(self):
         from solidworks_mcp.utils.com_executor import ComCallTimeoutError
@@ -220,7 +285,7 @@ class TestComTimeout(unittest.TestCase):
         with patch.object(
             base, "run_com", side_effect=ComCallTimeoutError("too slow")
         ):
-            result = server.solidworks_connect(launch_if_needed=False)
+            result = reg_misc.solidworks_connect(launch_if_needed=False)
         self.assertFalse(result["success"])
         self.assertEqual(result["error"]["code"], "SW_TIMEOUT")
 

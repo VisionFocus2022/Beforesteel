@@ -12,8 +12,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from solidworks_mcp.examples import ring_light
-from solidworks_mcp.examples.ring_light import (
+from solidworks_mcp.products import ring_light
+from solidworks_mcp.products.ring_light import (
     DEFAULT_ROW_COUNTS,
     build_ring_light_layout,
     build_spherical_dome_bands,
@@ -173,15 +173,15 @@ class TestRingLightMeshExport(unittest.TestCase):
 
 class TestCreateRingLightEndToEnd(unittest.TestCase):
     @patch(
-        "solidworks_mcp.examples.ring_light.check_overwrite_confirm",
+        "solidworks_mcp.products.ring_light.check_overwrite_confirm",
         return_value=(True, ""),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light.ensure_sink_path",
+        "solidworks_mcp.products.ring_light.ensure_sink_path",
         side_effect=lambda path, allowed_root=None: (True, "", path),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light.validate_output_file",
+        "solidworks_mcp.products.ring_light.validate_output_file",
         return_value=(True, ""),
     )
     def test_native_path_writes_stl_and_layout_side_artifacts(
@@ -210,15 +210,15 @@ class TestCreateRingLightEndToEnd(unittest.TestCase):
             )
 
     @patch(
-        "solidworks_mcp.examples.ring_light.check_overwrite_confirm",
+        "solidworks_mcp.products.ring_light.check_overwrite_confirm",
         return_value=(True, ""),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light.ensure_sink_path",
+        "solidworks_mcp.products.ring_light.ensure_sink_path",
         side_effect=lambda path, allowed_root=None: (True, "", path),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light.validate_output_file",
+        "solidworks_mcp.products.ring_light.validate_output_file",
         return_value=(True, ""),
     )
     def test_unselectable_planes_fail_gracefully(self, _validate, _sink, _confirm):
@@ -242,15 +242,15 @@ class TestCreateRingLightEndToEnd(unittest.TestCase):
         self.assertEqual(result["error"]["code"], "SW_API_ERROR")
 
     @patch(
-        "solidworks_mcp.examples.ring_light.check_overwrite_confirm",
+        "solidworks_mcp.products.ring_light.check_overwrite_confirm",
         return_value=(True, ""),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light.ensure_sink_path",
+        "solidworks_mcp.products.ring_light.ensure_sink_path",
         side_effect=lambda path, allowed_root=None: (True, "", path),
     )
     @patch(
-        "solidworks_mcp.examples.ring_light.validate_output_file",
+        "solidworks_mcp.products.ring_light.validate_output_file",
         return_value=(True, ""),
     )
     def test_save_failure_reports_solidworks_error(self, _validate, _sink, _confirm):

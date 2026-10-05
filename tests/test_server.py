@@ -17,6 +17,8 @@ from solidworks_mcp.solidworks_api.app import SolidWorksApp
 from solidworks_mcp.server import _capabilities, mcp
 from solidworks_mcp.utils.com_executor import run_com
 
+from tests import _counts
+
 
 class TestServerRegistration(unittest.TestCase):
     def test_facade_reexports_every_registry_tool(self):
@@ -55,9 +57,41 @@ class TestServerRegistration(unittest.TestCase):
         tools = mcp._tool_manager.list_tools()
         resources = mcp._resource_manager.list_resources()
         prompts = mcp._prompt_manager.list_prompts()
-        self.assertEqual(len(tools), 81)
+        self.assertEqual(len(tools), _counts.DEFAULT_TOOLS)
         self.assertEqual(len(resources), 3)
-        self.assertEqual(len(prompts), 5)
+        self.assertEqual(len(prompts), _counts.PROMPT_COUNT)
+
+    def test_domains_manifest_covers_all_domain_modules(self):
+        """A-6（2026-10-05）：新增域模块忘登记 _DOMAINS 时静默漏注册——
+        本元测试对比「发现的含 register() 的域模块数」与 _DOMAINS 长度。"""
+        import importlib
+        import inspect
+        import pkgutil
+
+        import solidworks_mcp.registry as registry_pkg
+        from solidworks_mcp.registry import _DOMAINS
+
+        registered = {id(mod) for mod in _DOMAINS}
+        discovered = []
+        for mod_info in pkgutil.iter_modules(registry_pkg.__path__):
+            if mod_info.name in {"__init__", "base"}:
+                continue
+            mod = importlib.import_module(
+                f"solidworks_mcp.registry.{mod_info.name}"
+            )
+            if inspect.isfunction(getattr(mod, "register", None)):
+                discovered.append(mod_info.name)
+        missing = [
+            name for name in discovered
+            if id(importlib.import_module(
+                f"solidworks_mcp.registry.{name}")) not in registered
+        ]
+        self.assertEqual(
+            missing,
+            [],
+            f"registry module(s) with register() not listed in _DOMAINS "
+            f"(tools would silently vanish): {missing}",
+        )
 
     def test_advertised_tool_list_matches_registration(self):
         registered = [tool.name for tool in mcp._tool_manager.list_tools()]
@@ -137,9 +171,9 @@ class TestServerRegistration(unittest.TestCase):
         from solidworks_mcp.registry import drawing, file_io
 
         with patch.object(
-            drawing, "_call_connected", return_value={"success": True}
+            drawing, "call_connected", return_value={"success": True}
         ) as draw_call, patch.object(
-            file_io, "_call_connected", return_value={"success": True}
+            file_io, "call_connected", return_value={"success": True}
         ) as file_call:
             self.assertTrue(
                 server.solidworks_drawing_set_tolerance("D1@f", 0.1, -0.05)["success"]
@@ -186,14 +220,14 @@ class TestProductToolGate(unittest.TestCase):
 
     def test_default_subprocess_registers_79_tools(self):
         tools = self._registered_tools_in_subprocess({})
-        self.assertEqual(len(tools), 81)
+        self.assertEqual(len(tools), _counts.DEFAULT_TOOLS)
         self.assertNotIn("solidworks_part_create_ring_light", tools)
 
     def test_product_tools_register_under_env_gate(self):
         tools = self._registered_tools_in_subprocess(
             {"SOLIDWORKS_MCP_PRODUCT_TOOLS": "ring_light"}
         )
-        self.assertEqual(len(tools), 83)
+        self.assertEqual(len(tools), _counts.PRODUCT_TOOLS)
         self.assertIn("solidworks_part_create_ring_light", tools)
         self.assertIn("solidworks_part_create_ring_light_v3", tools)
 
@@ -234,6 +268,71 @@ class TestConfig(unittest.TestCase):
     def test_auto_start_environment_is_read_at_call_time(self):
         with patch.dict(os.environ, {"SOLIDWORKS_MCP_AUTO_START": "true"}):
             self.assertTrue(get_config().auto_start)
+
+
+class TestMainAndLogging(unittest.TestCase):
+    """R5（2026-10-05）：进程级行为——stdio 入口与日志回退分支。"""
+
+    def test_main_runs_stdio_transport(self):
+        from solidworks_mcp import server
+
+        with patch.object(server, "_configure_logging") as cfg, \
+             patch.object(server.mcp, "run") as run:
+            server.main()
+        cfg.assert_called_once()
+        run.assert_called_once_with(transport="stdio")
+
+    def test_configure_logging_falls_back_to_stream_on_oserror(self):
+        """日志盘不可写（OSError）→ StreamHandler 回退，不崩进程。"""
+        import logging
+        from logging import StreamHandler
+        from logging.handlers import RotatingFileHandler
+
+        from solidworks_mcp import server
+
+        with patch(
+            "solidworks_mcp.server.get_config"
+        ) as get_cfg, patch.object(
+            server, "RotatingFileHandler", side_effect=OSError("disk full")
+        ), patch.object(
+            logging, "basicConfig"
+        ) as basic:
+            get_cfg.return_value = type("Cfg", (), {"log_path": "x.log"})()
+            server._configure_logging()  # 不应抛出
+        basic.assert_called_once()
+        self.assertIsInstance(basic.call_args.kwargs["handlers"][0], StreamHandler)
+        self.assertNotIsInstance(
+            basic.call_args.kwargs["handlers"][0], RotatingFileHandler
+        )
+
+
+class TestComExecutorShutdown(unittest.TestCase):
+    """R5：shutdown 对阻塞 worker 的 join 超时分支（不无限等待）。"""
+
+    def test_shutdown_returns_promptly_when_worker_is_stuck(self):
+        import time
+
+        from solidworks_mcp.utils.com_executor import ComExecutor
+
+        release = threading.Event()
+        executor = ComExecutor()
+        try:
+            # 用无超时调用让 worker 卡在滞留调用上（不入毒化路径）
+            executor.call(release.wait) if False else None
+            # 直接种入卡死形态：启动 worker 后投递一个阻塞项
+            executor._ensure_started()
+            from concurrent.futures import Future
+
+            future = Future()
+            executor._queue.put((future, release.wait, (), {}))
+            time.sleep(0.2)  # worker 取件并阻塞
+            start = time.monotonic()
+            executor.shutdown()  # join(timeout=2.0) 后必须返回
+            elapsed = time.monotonic() - start
+            self.assertLess(elapsed, 5.0)
+        finally:
+            release.set()
+            executor.shutdown()
 
 
 if __name__ == "__main__":
