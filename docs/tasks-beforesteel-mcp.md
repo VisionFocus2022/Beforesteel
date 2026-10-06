@@ -2,7 +2,7 @@
 
 > **版本**：v1.0（2026-10-04）
 > **定档**：🔴 L3 · Phase 3 产物（tasks-full）
-> **关联**：`docs/prd-factoryforge-mcp.md`（FR/成功指标）· `docs/design-factoryforge-mcp.md`（§3 工具面/§10 探针）
+> **关联**：`docs/prd-beforesteel-mcp.md`（FR/成功指标）· `docs/design-beforesteel-mcp.md`（§3 工具面/§10 探针）
 > **执行节奏**：对齐主仓 N 系列惯例——每晚 1-2 任务、TDD、不自动 commit、总览表状态实时翻转
 
 ## ✅ 门禁裁决记录

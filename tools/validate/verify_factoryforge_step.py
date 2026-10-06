@@ -20,7 +20,7 @@ Assertion matrix per scene:
   A3 every body face_count > 0                      hard (zero broken faces)
   A4 bbox of walked bodies vs manifest bbox ± tol   recorded (assembly walk
      covers all comps -> full bbox comparable); tol 2mm + 2% for big scenes
-Ledger: factoryforge-mcp/output/sw-verify/ledger.md (append-only) + per-scene json.
+Ledger: beforesteel-mcp/output/sw-verify/ledger.md (append-only) + per-scene json.
 
 Usage (SolidWorksMCP repo root, main venv):
   python tools/validate/verify_factoryforge_step.py --all
@@ -39,7 +39,7 @@ import win32com.client
 MAIN_REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(MAIN_REPO))
 
-FF_REPO = MAIN_REPO.parent / "factoryforge-mcp"
+FF_REPO = MAIN_REPO.parent / "beforesteel-mcp"
 LAYOUT_DIR = FF_REPO / "output" / "layout"
 LEDGER_DIR = FF_REPO / "output" / "sw-verify"
 

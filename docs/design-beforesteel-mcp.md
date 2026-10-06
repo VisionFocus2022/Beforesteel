@@ -2,7 +2,7 @@
 
 > **版本**：v1.0（2026-10-04）
 > **定档**：🔴 L3 · Phase 2 产物
-> **关联**：`docs/prd-factoryforge-mcp.md`（FR-001~009）· `docs/roadmap-factoryforge-integration.md`
+> **关联**：`docs/prd-beforesteel-mcp.md`（FR-001~009）· `docs/roadmap-beforesteel-integration.md`
 > **上游取证补充**（2026-10-04）：EngineStub 为**通用**引擎基类（吃任意 scene 对象，serves exactly one sidecar）；grader 建于其上（`grading.core.GradedEngine` 子类）→ **18 场景 headless 进程内可跑且 tag 可交互**；sidecar 包硬依赖仅 `websockets>=12`，**requires-python ≥3.11**（新仓独立 venv，不影响主仓 3.10）；`TagBusClient` 现成；grading registry 提供 `rubrics()/references()/default_scene()`。
 
 ## ✅ 门禁裁决记录

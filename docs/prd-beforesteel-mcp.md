@@ -6,7 +6,7 @@
 > - 影响半径：大（新子产品线 + 外部依赖锁定；**不动主仓 81/83 工具契约**——独立仓方案规避硬触发器 7）
 > - 规模：大（预估 >1500 行 / >15 文件，Wave 1）
 > - 可逆性：双向门（独立新仓，可整仓废弃）
-> **关联**：`docs/roadmap-factoryforge-integration.md`（程序计划层，两波结构）
+> **关联**：`docs/roadmap-beforesteel-integration.md`（程序计划层，两波结构）
 > **上游**：FactoryForge 1.1.1（MIT，`E:\开源项目\factoryforge-1.1.1\`，消费不 fork）
 
 ## ✅ 门禁裁决记录
@@ -15,8 +15,8 @@
 |---|---|---|
 | 探索门禁（三栏账） | 2026-10-04 | 通过：方向=分两波（先 MCP 化后 CAD 闭环）；落点=独立新仓；优先级=小步并行、用户验证主线不变 |
 | PRD 门禁 | 2026-10-04 | 通过：PRD v1.0 确认进 Phase 2；附带裁决 Q-1=env 门控可选、Q-2=本地独立仓、Q-3=fixtures 提取+锁测 |
-| Design 门禁 | 2026-10-04 | 通过（详见 design-factoryforge-mcp.md 门禁表）：统一 tag bus 协议路径 + 15 工具面 |
-| Tasks 门禁 | 2026-10-04 | 通过（详见 tasks-factoryforge-mcp.md 门禁表）：11 任务；执行模式=逐任务推进，后转夜间波次执行 |
+| Design 门禁 | 2026-10-04 | 通过（详见 design-beforesteel-mcp.md 门禁表）：统一 tag bus 协议路径 + 15 工具面 |
+| Tasks 门禁 | 2026-10-04 | 通过（详见 tasks-beforesteel-mcp.md 门禁表）：11 任务；执行模式=逐任务推进，后转夜间波次执行 |
 | Execute 门禁 | 2026-10-05 | **通过（晨验）**：夜间执行 W1-W9 全波（overnight-execution 协议）+ 晨报验收批准。AC 全过：15 工具 / 113 tests 绿 / coverage 87% / 18 场景台账 18-18 / 种子 3-3=100%（目标 ≥80%）；待裁决 10 条按默认接受（2026-10-05）；夜间分支已 merge main |
 
 ## 1. 背景与目标
